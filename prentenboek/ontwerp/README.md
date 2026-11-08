@@ -6,7 +6,8 @@ Startpunt voor de Blender-versie van *Agent Daan & Joep*. Doel: platen op het ni
 
 | Bestand | Inhoud |
 |---|---|
-| `jongen-ontwerp.jpg` | De jongen: close-up van het kapsel, voor- en driekwartaanzicht in politiepak. |
+| `jongen-ontwerp.jpg` | **Hoofdontwerp van de jongen** (gekozen door Jan Pieter): voor- en driekwartaanzicht in politiepak met pet. Gezicht, verhoudingen, kleding en pet volgen dit beeld. |
+| `jongen-kapsel.jpg` | Alleen als referentie voor het haar zonder pet (bladzijde 1 en 13). Het gezicht komt uit een ander ontwerp; bij verschil wint `jongen-ontwerp.jpg`. |
 | `joep-ontwerp.jpg` | Joep: voor- en zijaanzicht. |
 
 Beide zijn met AI gemaakt op basis van een tekstbeschrijving. Er zijn geen foto's gebruikt of geüpload. De echte foto's staan niet in deze repository.
@@ -14,10 +15,14 @@ Beide zijn met AI gemaakt op basis van een tekstbeschrijving. Er zijn geen foto'
 ## De jongen (ongeveer 3 jaar)
 
 - **Verhoudingen:** groot hoofd (ca. 1/3 van de lengte), korte benen, rond buikje, mollige handjes.
-- **Gezicht:** rond, volle wangen met een roze blos, licht huidtype. Grote lichtblauwe ogen, haast onzichtbare lichtblonde wenkbrauwen, klein knopneusje, ondeugend lachje, oren staan iets uit.
-- **Haar:** platinablond tot bijna wit. Zijkanten en achterhoofd heel kort (blond donslaagje, hoofdhuid schemert door). Bovenop ca. 5 cm, naar voren en omhoog in een losse kuif, met een paar dunne pieken op de kruin.
-  - Onder de pet blijven de zijkanten kort blond, niet kaal.
-- **Kleding:** donkerblauw politieoverhemd met twee borstzakken en een gouden ster links, donkerblauwe broek, zwarte schoentjes, zwarte riem met speelgoedportofoon, donkerblauwe pet met glanzende zwarte klep en gouden ster.
+- **Gezicht:** zacht en rond, volle wangen met een roze blos, licht huidtype. Grote grijsblauwe ogen met een glanzende catchlight, haast onzichtbare lichtblonde wenkbrauwen, klein knopneusje, lief gesloten lachje, oren staan iets uit.
+- **Haar:** platinablond tot bijna wit.
+  - Met pet: zachte blonde lokken die onder de pet uitkomen, bij de slapen en in de nek, plus een kort pluizig pony'tje.
+  - Zonder pet: zijkanten en achterhoofd heel kort, bovenop een losse kuif naar voren en omhoog (zie `jongen-kapsel.jpg`).
+- **Kleding:**
+  - Donkerblauw politieoverhemd met twee borstzakken met klep, zilveren knoopjes, schouderlusjes en een gouden ster links.
+  - Donkerblauwe broek, zwarte veterschoentjes, zwarte riem met zilveren gesp en een zwarte portofoon op de rechterheup.
+  - Donkerblauwe pet met glanzende zwarte klep, zwarte band en een gouden schildje met ster.
   - Op de laatste bladzijde draagt hij een lichtblauwe pyjama.
 
 ## Joep (knuffelaapje, ca. 15 cm)
