@@ -35,12 +35,16 @@ Beide zijn met AI gemaakt op basis van een tekstbeschrijving. Er zijn geen foto'
 - **Overig:** plat flapperig staartje (iets donkerder), wit ophanglusje bovenop het hoofd, zichtbare naden.
 - **Pet:** vanaf bladzijde 2 een piepklein donkerblauw politiepetje met gouden ster.
 
-## Aanpak in Blender (Cycles)
+## Aanpak in Blender (Cycles) — zoals gebouwd
 
-- **Huid:** Principled BSDF met subsurface en een lichte bump. Blos via een vertex color of een texture.
-- **Ogen:** aparte oogbol met iris-texture, glanzende cornea en catchlight.
-- **Haar:** Hair Curves met clumping en roughness. Kuif als geleidecurves naar voren en omhoog, zijkanten als kort dons.
-- **Joep:** eenvoudige subdivided vormen met korte, dichte fur (Hair Curves) en een sheen-shader. Borduursel als licht verhoogde geometrie.
-- **Stof:** weefselstructuur via een noise- of wave-texture op bump, naden als randgeometrie.
-- **Licht en camera:** zachte key light, rim light en HDRI-achtige omgeving. Scherptediepte, 4:3, 2400×1800.
-- **Scènes:** de 14 bladzijden uit `../README.md`. Elke scène op een rond decor (de "stip"), zoals in de huidige versie.
+Alles staat in `../blender/` en wordt vanaf de commandline gebouwd (`blender -b -P run.py`).
+
+- **Hoofd** (`lib/head.py`): vervormde bol met volle wangen, knopneusje, mondgroef en oogkassen; blos, lippen en sproetjes als kleurattribuut; huid met subsurface. Ogen met procedurele iris, glanzende cornea en amandelvormige oogleden; mond open/dicht per uitdrukking.
+- **Haar** (`lib/hair.py`): Hair Curves. Kuif als ca. 250 lokken van parallelle strengen die over een 'haarschil' naar voren lopen en vooraan omhoog krullen; zijkanten als kort dons; donkerdere wortels via de Hair Info-intercept. Onder de pet alleen plukjes bij de slapen.
+- **Lijf** (`lib/daan.py`, `lib/body.py`): buizen langs splines met IK voor armen en benen (rekbaar, cartoonstijl), mollige handjes met vingers, schoentjes; uniform met kraag, beleg, knoopjes, borstzakken met klep, schouderlusjes, ster, riem met gesp en portofoon. Pyjama voor bedtijd.
+- **Joep** (`lib/joep.py`): pluche basis met hartvormig crème gezichtsmasker en naden als attributen, ca. 250.000 korte vachtharen (Hair Curves) met kleur per haar, geborduurde oogjes, neusje en lach, lusje, plat staartje, petje.
+- **Bijfiguren** (`lib/people.py`): lange en dikke boef (streepshirt, maskertje, muts, stoppels), bakker (koksmuts, snor, schort).
+- **Decor** (`lib/world.py`, `lib/sets.py`, `lib/props.py`): visgraatklinkers steen voor steen, stoeptegels, grassprieten als Hair Curves, bomen en struiken met losse blaadjes, Hollandse trap- en klokgevels, bakkerij met luifel, slaapkamer, kindermaat-politieauto in Nederlandse striping, koekjes, kruimels, jutezak, vergrootglas met echte lens, medailles, confetti.
+- **Licht en camera**: zon + luchtgradiënt + vlaklampen, scherptediepte per plaat, bewegingsonscherpte bij de auto, AgX-kleurbeheer; gloed en vignet in `../boek/build.py`.
+
+`proefplaat-daan-joep.jpg` is de eerste proefrender van Daan en Joep samen.
