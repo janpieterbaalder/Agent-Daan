@@ -30,7 +30,7 @@ def main(out, opts):
         x = 0.12 + 0.28 * t + 0.03 * np.sin(t * 7)
         y = -0.17 + 0.4 * t
         pts.append((x + rng.normal(0, 0.008), y + rng.normal(0, 0.006)))
-    PS.crumbs('Kruimel', pts, seed=5, z=0.0007, size=1.6)
+    PS.crumbs('Kruimel', pts, seed=5, z=0.0007, size=1.9)
     # voorgrond: groot koekmannetje met hap en dikke kruimels
     PS.cookie('Voorkoek', 0.12, -0.21, 0.0012, r=2.2, seed=3, bite=True, flat_=True, rot=-25)
     PS.crumbs('Grote_kruimel', [(0.07, -0.19), (0.16, -0.18), (0.18, -0.23), (0.09, -0.24), (0.14, -0.15)],
@@ -42,5 +42,5 @@ def main(out, opts):
     V.in_hand(d, 1, lambda par, loc: PS.magnifier('Vergrootglas', par, (0.0, 0.0), 4.4, rot=-35, s=1.0))
     Joep('Joep', pose=dict(loc=(0.0, -0.16, 0.0), arm_r='point', arm_l='down', head=-6),
          expr=dict(mouth='grin', look=(0.25, 0.0)), cap=True).build()
-    V.cam((0.02, -0.56, 0.24), (0.02, 0.0, 0.04), lens=34, fstop=5.6, focus=(-0.12, -0.14, 0.06))
+    V.cam((0.02, -0.6, 0.13), (0.02, 0.0, 0.06), lens=34, fstop=5.6, focus=(-0.12, -0.14, 0.06))
     K.render(out)

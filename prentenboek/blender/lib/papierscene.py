@@ -19,7 +19,11 @@ def setup(opts, kind='spread', night=False, transparent=False):
     return Q
 
 
+DOF_FACTOR = 3.0      # scherptediepte bewust mild: de gebruiker wil weinig vaagheid op voor- en achtergrond
+
+
 def cam(loc, target, lens=45, fstop=8.0, focus=None):
+    fstop = max(fstop * DOF_FACTOR, 20.0) if fstop else None
     return K.camera(loc, target, lens=lens, fstop=fstop, focus=focus if focus is not None else target, clip=(0.01, 20))
 
 

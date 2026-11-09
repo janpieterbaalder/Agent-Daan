@@ -26,8 +26,6 @@ def main(out, opts):
         a = i / 8 * math.pi
         PS.cookie(f'Vliegkoek{i}', 0.005 + 0.11 * math.cos(a), -0.06 - 0.004 * i, 0.12 + 0.08 * math.sin(a),
                   r=1.0, seed=50 + i, rot=rng.uniform(-80, 80))
-    for i, (x, s) in enumerate(((-0.07, 0.8), (0.08, 0.9), (0.0, 0.6))):
-        PS.puff(f'Schrikwolk{i}', x, -0.03, 0.012, s=s, col='#f3ede0')
     for i, (x, y) in enumerate(((-0.14, -0.2), (0.12, -0.22))):
         PS.tuft(f'Pol{i}', x, y, h=3.5, w=6, color='#5f9a3f', seed=i + 5)
     V.cam((0.0, -0.5, 0.11), (0.0, 0.0, 0.12), lens=40, fstop=7.0, focus=(0.0, -0.02, 0.12))

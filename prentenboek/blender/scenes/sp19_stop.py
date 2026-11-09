@@ -29,8 +29,6 @@ def main(out, opts):
     rng = np.random.default_rng(5)
     for i, (x, z) in enumerate(((-0.05, 0.25), (0.03, 0.28), (0.11, 0.26), (0.0, 0.21), (0.08, 0.22), (0.16, 0.2))):
         PS.cookie(f'Vliegkoek{i}', x, -0.03, z, r=0.9, seed=30 + i, rot=rng.uniform(-60, 60))
-    for i, (x, z, s) in enumerate(((-0.07, 0.02, 0.9), (0.16, 0.025, 0.8))):
-        PS.puff(f'Sprong{i}', x, 0.0, z, s=s, col='#f3ede0')
     # Daan links, Joep rechts
     Daan('Daan', pose=dict(loc=(-0.27, -0.14, 0.0), arm_r='stop', arm_l='hip', head=-4),
          expr=dict(mouth='open', brows='cross', look=(0.2, 0.0)), cap=True).build()
