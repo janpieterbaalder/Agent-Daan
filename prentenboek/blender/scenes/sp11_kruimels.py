@@ -4,7 +4,7 @@ Kikvorsperspectief op de stoep voor de bakkerij. Vlak voor de camera (onscherp) 
 een hap eruit en grote kruimels. Daan buigt zich met zijn vergrootglas over het spoor, Joep wijst waar het
 heen gaat: schuin naar rechts achter, de straat uit."""
 import numpy as np
-from lib import core as K, papierset as PS, papierscene as V
+from lib import core as K, papier as P, papierset as PS, papierscene as V
 from lib.papierpop import Daan, Joep
 
 CM = 0.01
@@ -36,11 +36,16 @@ def main(out, opts):
     PS.crumbs('Grote_kruimel', [(0.07, -0.19), (0.16, -0.18), (0.18, -0.23), (0.09, -0.24), (0.14, -0.15)],
               seed=9, z=0.0007, size=2.4)
     # Daan met vergrootglas, Joep wijst
-    d = Daan('Daan', pose=dict(loc=(-0.1, -0.13, 0.0), arm_r='forward', arm_l='hip', head=10),
-             expr=dict(mouth='o', brows='up', look=(0.15, -0.3)), cap=True)
+    d = Daan('Daan', pose=dict(loc=(-0.1, -0.13, 0.0), arm_r=(70, 80), arm_l='hip', head=8),
+             expr=dict(mouth='o', brows='up', look=(0.3, -0.15)), cap=True)
     d.build()
-    V.in_hand(d, 1, lambda par, loc: PS.magnifier('Vergrootglas', par, (0.0, 0.0), 4.4, rot=-35, s=1.0))
-    Joep('Joep', pose=dict(loc=(0.0, -0.16, 0.0), arm_r='point', arm_l='down', head=-6),
+
+    def held(par, loc):
+        # handvat in de vuist (hand vóór het steeltje), lens voorbij de hand, iets naar de kruimels gekanteld
+        grip = P.group('Vergrootglas_greep', par, (0.0, 0.0), angle=12)
+        return PS.magnifier('Vergrootglas', grip, (0.0, -3.0), 3.0, rot=180, s=1.0)
+    V.in_hand(d, 1, held)
+    Joep('Joep', pose=dict(loc=(0.095, -0.16, 0.0), arm_r='point', arm_l='down', head=-6),
          expr=dict(mouth='grin', look=(0.25, 0.0)), cap=True).build()
     V.cam((0.02, -0.6, 0.13), (0.02, 0.0, 0.06), lens=34, fstop=5.6, focus=(-0.12, -0.14, 0.06))
     K.render(out)
