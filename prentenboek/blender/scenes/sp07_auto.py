@@ -28,7 +28,7 @@ def main(out, opts):
     PS.grassland(y0=-0.6, y1=0.5, color='#8cc35e')
     PS.road('Weg', -1.0, 1.0, -0.04, 0.12)
     # auto
-    car = PS.police_car('Auto', 0.17, 0.04, facing=1, scale=1.0)
+    car = PS.police_car('Auto', 0.17, 0.04, facing=1, scale=1.0, back_open=True)
     car['root'].rotation_euler[1] = math.radians(-2.5)
     Daan('Daan', pose=dict(loc=car['driver'], arm_r='forward', arm_l='forward', legs='sit', head=-3),
          expr=dict(mouth='grin', look=(0.2, 0.0)), cap=True).build()

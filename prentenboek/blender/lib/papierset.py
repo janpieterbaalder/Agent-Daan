@@ -445,7 +445,7 @@ def table(name, x, y, w=16, h=6.5, depth=2.8):
     return dict(top=h * CM, front=y, back=y + depth * CM)
 
 
-def police_car(name, x, y, z=0.0, facing=1, lights=True, scale=1.0, window_open=True):
+def police_car(name, x, y, z=0.0, facing=1, lights=True, scale=1.0, window_open=True, back_open=False):
     """Nederlandse politieauto in zijaanzicht, op Daan-schaal (36 x 17 cm): wit glanspapier, blauwe band met
     geeloranje bies en schuine blokken op het voorscherm, POLITIE op de voordeur, lichtbalk op het dak.
     De ramen zijn echte openingen: binnenin zit een donkere achterwand, daartussen kan Daan achter het stuur
@@ -479,12 +479,13 @@ def police_car(name, x, y, z=0.0, facing=1, lights=True, scale=1.0, window_open=
     C(name + '_cstijl', chaikin(np.array([(-9.4, 8.5), (-9.0, 15.0), (-11.7, 15.9), (-16.6, 8.5)]), 2), WHITE, 0.0)
     C(name + '_raamrubber', strip([(10.4, 8.75), (-9.5, 8.75)], 0.35, cap=False), '#3a3d45', -0.0012,
       paper='karton')
-    # ramen: glas tussen carrosserie en figuren (voorraam kan open)
+    # ramen: glas tussen carrosserie en figuren (voor- en achterraam kunnen open)
     if not window_open:
         C(name + '_voorraam', np.array([(10.6, 8.5), (5.0, 15.0), (-2.4, 15.0), (-2.4, 8.5)]), '#a6cfea', 0.0015,
           paper='raam', jitter=0.0)
-    C(name + '_achterraam', np.array([(-2.4, 8.5), (-2.4, 15.0), (-9.6, 15.0), (-9.6, 8.5)]), '#a6cfea', 0.0015,
-      paper='raam', jitter=0.0)
+    if not back_open:
+        C(name + '_achterraam', np.array([(-2.4, 8.5), (-2.4, 15.0), (-9.6, 15.0), (-9.6, 8.5)]), '#a6cfea', 0.0015,
+          paper='raam', jitter=0.0)
     # striping: blauwe band, geeloranje bies, schuine blokken op het voorscherm
     C(name + '_blauw', np.array([(-18.3, 3.5), (17.9, 3.5), (18.2, 5.6), (-18.3, 5.6)]), BLUE, -0.0016)
     C(name + '_oranje', np.array([(-18.2, 5.6), (18.2, 5.6), (18.0, 6.35), (-18.0, 6.35)]), ORANGE, -0.0016)
