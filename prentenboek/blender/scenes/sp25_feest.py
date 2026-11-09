@@ -1,62 +1,42 @@
-"""p. 25-26: Goed gedaan, agent Daan! Goed gedaan, agent Joep!
-Feest voor de bakkerij: Daan en Joep staan op een kistje met een gouden medaille, confetti dwarrelt; de bakker
-klapt en de boeven, nu met een koksmuts op, juichen mee."""
-import math
-import numpy as np
-from lib import core as K, cast, stage, sets, props as P, world as Wd
-from lib.daan import Daan
-from lib.joep import Joep, joep_mats
-from lib.people import Person, people_mats
+"""p. 24-25: Goed gedaan, agent Daan! Goed gedaan, agent Joep!
+
+Feest op het pleintje: Daan en Joep staan op een kist met een medaille, iedereen juicht. De boeven dragen
+nu een koksmuts (ze helpen de bakker), vlaggetjes en confetti, de politieauto met zwaailicht erbij."""
+from lib import core as K, papierset as PS, papierscene as V
+from lib.papierpop import Daan, Joep, Mens
 
 
 def main(out, opts):
-    Q = stage.setup(opts, 'spread')
-    dm = cast.char_mats()
-    jm = joep_mats(dm)
-    pm = people_mats(dm)
-    pr = P.prop_mats()
-    wm = Wd.world_mats()
-    stage.sky('#4f93df', '#d6ebf6', '#8f9a7a', 1.0)
-    stage.sun(250, 40, 4.5)
-    stage.clouds('Wolk', [(-8, 20, 10), (10, 22, 12)], scale=2.0)
-    sets.street(None, bakery_x=0.0, quality=Q, cob=(-6, 6, -3.2, 2.6), y_fac=5.0)
-    # kistje als podium
-    sets._box('Kistje', (0.7, 0.5, 0.32), (0.0, 3.55, 0.16), wm['bed_wood'], None, n=6)
-    cam = (0.35, 1.35, 0.42)
-    d = Daan('Daan', pose=dict(
-        root=(0.0, 3.55, 0.32), yaw=-8, head=(-14, 4, -4), lean=(-0.08, 0),
-        hand_r=(-0.3, -0.02, 0.98), palm_r=(0, -1, 0), fdir_r=(-0.3, 0, 1), fingers_r='fist', elbow_r=(-1, 0.3, -0.5),
-        hand_l=(0.3, -0.02, 0.98), palm_l=(0, -1, 0), fdir_l=(0.3, 0, 1), fingers_l='fist', elbow_l=(1, 0.3, -0.5)),
-        expr=dict(smile=1.0, mouth='grin', open=0.7, squint=0.35, look_at=cam), cap=True, mats=dm,
-        hair_density=Q['hair'])
+    V.setup(opts)
+    PS.sky(y=0.6, w=180, h=80, sun=None, clouds=((-50, 44, 0.6), (50, 46, 0.6)))
+    yh = 0.27
+    for i, (hx, w, h, col, rf, dr) in enumerate(((-0.42, 14, 16, '#9fb3d9', '#b8503e', '#7a4f8f'),
+                                                (0.16, 14, 15, '#e88a7d', '#4b5d7a', '#4f7a3a'),
+                                                (0.42, 13, 17, '#8fb8a8', '#6b4a3a', '#a83b3b'))):
+        with PS.scaled((hx, yh, 0), 1.35):
+            PS.house(f'Huis{i}', hx, yh, w, h, col, rf, dr, seed=i + 8)
+    with PS.scaled((-0.14, yh, 0), 1.35):
+        PS.bakery('Bakkerij', -0.14, yh)
+    PS.pavement('Plein', -1.0, 1.0, -0.6, yh + 0.005, kind='klinker', seed=9)
+    PS.bunting('Vlag1', -0.6, 0.0, 0.2, 0.12, n=12, sag=3.0)
+    PS.bunting('Vlag2', 0.0, 0.6, 0.2, 0.12, n=12, sag=3.0)
+    PS.police_car('Auto', 0.38, 0.16, facing=-1, scale=0.8)
+    # podium
+    PS.crate('Podium', 0.0, -0.08, w=22, h=6)
+    d = Daan('Daan', pose=dict(loc=(-0.04, -0.085, 0.06), arm_r='salute', arm_l='down', head=-4),
+             expr=dict(mouth='grin', brows='up'), cap=True)
     d.build()
-    P.medal('Medaille_daan', d.root, (0.0, -0.13, 0.45), (0.08, 0, 0), r=0.032, ribbon_len=0.1)
-    j = Joep('Joep', pose=dict(
-        root=(0.24, -0.02, 0.0), rot=(0, 0, -0.2), cap=True, head=(-0.3, 0.2, 0.15), scale=0.9,
-        arm_r=[(-0.04, -0.01, 0.05), (-0.07, -0.02, 0.1), (-0.09, -0.02, 0.15)],
-        arm_l=[(0.04, -0.01, 0.05), (0.07, -0.02, 0.1), (0.09, -0.02, 0.15)]),
-        mats=jm, fur=Q['fur'])
-    jr = j.build()
-    jr.parent = d.root
-    P.medal('Medaille_joep', j.body, (0.0, -0.045, 0.03), (0.1, 0, 0), r=0.018, ribbon_len=0.06)
-    Person('Bakker', 'bakker', pose=dict(
-        root=(1.15, 3.25, 0.12), yaw=-30, head=(-6, -10, 0),
-        hand_r=(-0.02, -0.4, 1.12), palm_r=(1, 0, 0), fdir_r=(0.2, 0, 1), fingers_r='flat',
-        hand_l=(0.05, -0.4, 1.12), palm_l=(-1, 0, 0), fdir_l=(-0.2, 0, 1), fingers_l='flat'),
-        expr=dict(smile=1.0, mouth='grin', open=0.5, squint=0.4, look_at=cam), mats=pm).build()
-    Person('Lange', 'lang', pose=dict(
-        root=(-1.2, 3.35, 0.12), yaw=25, head=(-8, 10, 0),
-        hand_r=(-0.35, -0.05, 1.75), palm_r=(0, -1, 0), fdir_r=(-0.2, 0, 1), fingers_r='spread',
-        hand_l=(0.35, -0.05, 1.75), palm_l=(0, -1, 0), fdir_l=(0.2, 0, 1), fingers_l='spread'),
-        expr=dict(smile=1.0, mouth='grin', open=0.6, squint=0.3, look_at=cam), mats=pm, mask_up=0.38,
-        baker_hat=True).build()
-    Person('Dikkie', 'dik', pose=dict(
-        root=(-1.95, 2.95, 0.12), yaw=35, head=(-8, 8, 0),
-        hand_r=(-0.3, -0.1, 1.25), palm_r=(0, -1, 0), fdir_r=(-0.2, 0, 1), fingers_r='spread',
-        hand_l=(0.3, -0.25, 0.9), palm_l=(0, -1, 0), fingers_l='spread'),
-        expr=dict(smile=1.0, mouth='grin', open=0.6, squint=0.5, look_at=cam), mats=pm, mask_up=0.38,
-        baker_hat=True).build()
-    P.confetti('Confetti', int(900 * (0.5 if Q['q'] == 'preview' else 1.0)), ((-3, 1.8, 0.3), (3, 5.0, 3.2)), size=0.014)
-    K.camera(cam, (-0.2, 3.6, 1.05), lens=22, fstop=4.0, focus=(0.0, 3.4, 0.95))
-    K.light('AREA', (1.5, 0.5, 1.8), (0, 3.5, 0.9), energy=380, size=3.0, color=(1.0, 0.95, 0.9))
+    PS.medal('Medaille_Daan', d.root, (0.0, 6.1), 4.5)
+    j = Joep('Joep', pose=dict(loc=(0.05, -0.088, 0.06), arm_l='cheer', arm_r='cheer', head=6),
+             expr=dict(mouth='grin', eyes='happy'), cap=True)
+    j.build()
+    PS.medal('Medaille_Joep', j.root, (0.0, 3.0), 4.5, s=0.8)
+    Mens('Bakker', 'bakker', pose=dict(loc=(-0.22, -0.02, 0.0), arm_l='cheer', arm_r='cheer', head=-4),
+         expr=dict(mouth='grin', eyes='happy')).build()
+    Mens('Lange', 'lang', pose=dict(loc=(0.2, 0.0, 0.0), arm_l='cheer', arm_r='wave', head=5),
+         expr=dict(mouth='grin'), mask_up=True, chef=True).build()
+    Mens('Dikkie', 'dik', pose=dict(loc=(0.29, -0.03, 0.0), arm_l='cheer', arm_r='cheer', head=-5),
+         expr=dict(mouth='grin', eyes='happy'), mask_up=True, chef=True).build()
+    PS.confetti('Confetti', 90, -0.4, 0.4, 0.04, 0.3, -0.2, 0.05, seed=7)
+    V.cam((0.0, -0.84, 0.12), (0.0, 0.0, 0.12), lens=38, fstop=8.0, focus=(0.0, -0.08, 0.1))
     K.render(out)

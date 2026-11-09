@@ -23,7 +23,7 @@ WEB = os.path.join(ROOT, 'web')
 ART = os.path.join(ROOT, 'artifact')
 FONTS = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Microsoft', 'Windows', 'Fonts')
 TITLE = 'Agent Daan & Joep'
-DESC = 'Bladerboek van het 3D-prentenboek Agent Daan & Joep: De koekjesboeven.'
+DESC = 'Bladerboek van het papieren prentenboek Agent Daan & Joep: De koekjesboeven.'
 SITE_URL = ''
 PX = 2480                                         # 21 cm op 300 dpi
 BLEED = 35                                        # 3 mm
@@ -114,12 +114,11 @@ SHEETS = [
         ('Goed gedaan, agent Joep!', 0.95, 0.1, 140, 'klank', dict(anchor='rm', rot=3, fill=GOLD)),
     ]),
     dict(name='bedtijd', spread='sp27_bedtijd', texts=[
-        ('Nu is het bedtijd.', 0.62, 0.36, 112, 'body', dict(anchor='la', fill=(255, 240, 205))),
-        ('Welterusten, agent Daan.\nWelterusten, Joep.', 0.62, 0.48, 104, 'body', dict(anchor='la', fill=(255, 240, 205))),
+        ('Nu is het bedtijd.', 0.665, 0.4, 112, 'body', dict(anchor='la', fill=(255, 240, 205), stroke=0, shadow=True)),
+        ('Welterusten, agent Daan.\nWelterusten, Joep.', 0.665, 0.52, 104, 'body', dict(anchor='la', fill=(255, 240, 205), stroke=0, shadow=True)),
     ]),
     dict(name='einde', left=('vignet', 'colofon'), right=('patroon', 'schutblad'), texts=[
         ('Einde', 0.25, 0.2, 190, 'titel_d', dict(anchor='mm')),
-        ('Voor Daan, van papa.', 0.25, 0.86, 74, 'sub_d', dict(anchor='mm')),
     ]),
 ]
 
@@ -151,11 +150,11 @@ def post(im, bloom=0.28, vign=0.12):
 
 # ------------------------------------------------------------------ tekst
 STYLES = {
-    'body': dict(font='body', fill=WHITE, stroke=0, shadow=True),
+    'body': dict(font='body', fill=NAVY, stroke=0.085, stroke_fill=(255, 251, 242), shadow=False),
     'klank': dict(font='black', fill=GOLD, stroke=0.11, stroke_fill=NAVY, shadow=True),
     'titel': dict(font='black', fill=WHITE, stroke=0.1, stroke_fill=NAVY, shadow=True),
-    'sub': dict(font='bold', fill=WHITE, stroke=0.0, shadow=True),
-    'klein': dict(font='light', fill=WHITE, stroke=0, shadow=True),
+    'sub': dict(font='bold', fill=WHITE, stroke=0.085, stroke_fill=NAVY, shadow=True),
+    'klein': dict(font='light', fill=NAVY, stroke=0.08, stroke_fill=(255, 251, 242), shadow=False),
     'titel_d': dict(font='black', fill=NAVY, stroke=0, shadow=False),
     'sub_d': dict(font='bold', fill=(70, 80, 120), stroke=0, shadow=False),
 }

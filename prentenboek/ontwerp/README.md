@@ -1,50 +1,30 @@
-# Ontwerp en Blender-plan
+# Ontwerp — papieren kijkdoos
 
-Startpunt voor de Blender-versie van *Agent Daan & Joep*. Doel: platen op het niveau van een gestileerde 3D-animatiefilm, met zachte huid, echte haarplukken, pluchebont en stofstructuur.
+De platen zijn opgezet als **papieren kijkdoos**: elke scène is een diorama van gelaagde knipsels, met verschillende papiersoorten, gefotografeerd als een maquette op tafel. De ontwerpbeelden hieronder bepalen karakter en kleuren, niet de vormen.
 
 ## Referenties
 
 | Bestand | Inhoud |
 |---|---|
-| `jongen-ontwerp.jpg` | **Hoofdontwerp van de jongen** (gekozen door Jan Pieter): voor- en driekwartaanzicht in politiepak met pet. Gezicht, verhoudingen, kleding en pet volgen dit beeld. |
-| `jongen-kapsel.jpg` | Alleen als referentie voor het haar zonder pet (bladzijde 1 en 13). Het gezicht komt uit een ander ontwerp; bij verschil wint `jongen-ontwerp.jpg`. |
-| `joep-ontwerp.jpg` | Joep: voor- en zijaanzicht. |
+| `jongen-ontwerp.jpg` | Daan als agentje: blond, blauwe ogen, blosjes, donkerblauw uniform met pet en gele ster. |
+| `jongen-kapsel.jpg` | Het blonde kapsel zonder pet. |
+| `joep-ontwerp.jpg` | Joep: bruin aapje met crème gezichtje. |
+| `proef-papier.jpg` | Ontwerpvel in papier: politieauto met Daan achter het stuur en Joep achterin, koekmannetjes, de zak, Daan zonder pet, de lange boef. |
 
-Beide zijn met AI gemaakt op basis van een tekstbeschrijving. Er zijn geen foto's gebruikt of geüpload. De echte foto's staan niet in deze repository.
+De ontwerpbeelden `jongen-*` en `joep-*` zijn met AI gemaakt op basis van een tekstbeschrijving; de platen zelf niet. Er zijn geen foto's gebruikt of geüpload. De echte foto's staan niet in deze repository.
 
-## De jongen (ongeveer 3 jaar)
+## Uitgangspunten
 
-- **Verhoudingen:** groot hoofd (ca. 1/3 van de lengte), korte benen, rond buikje, mollige handjes.
-- **Gezicht:** zacht en rond, volle wangen met een roze blos, licht huidtype. Grote grijsblauwe ogen met een glanzende catchlight, haast onzichtbare lichtblonde wenkbrauwen, klein knopneusje, lief gesloten lachje, oren staan iets uit.
-- **Haar:** platinablond tot bijna wit.
-  - Met pet: zachte blonde lokken die onder de pet uitkomen, bij de slapen en in de nek, plus een kort pluizig pony'tje.
-  - Zonder pet: zijkanten en achterhoofd heel kort, bovenop een losse kuif naar voren en omhoog (zie `jongen-kapsel.jpg`).
-- **Kleding:**
-  - Donkerblauw politieoverhemd met twee borstzakken met klep, zilveren knoopjes, schouderlusjes en een gouden ster links.
-  - Donkerblauwe broek, zwarte veterschoentjes, zwarte riem met zilveren gesp en een zwarte portofoon op de rechterheup.
-  - Donkerblauwe pet met glanzende zwarte klep, zwarte band en een gouden schildje met ster.
-  - Op de laatste bladzijde draagt hij een lichtblauwe pyjama.
+- **Vormen**: platte knipsels met een iets onregelmatige schaarrand en een lichte snijkant; diepte komt uit laagjes (1,2 mm) en echte schaduwen.
+- **Papiersoort per onderdeel**: huid van aquarelpapier, blosjes van zijdepapier, haar en gras van crêpepapier, kleding van linnen- of bedrukt papier, ster en schildje van goudfolie, oogjes en schoenen van glanspapier, stammen en zakken van kraftpapier, daken van golfkarton.
+- **Gezicht**: glanzende oogjes met een lichtpuntje, neusje van aquarelpapier, roze blosjes, een mondje van een strookje papier.
+- **Herkenbaarheid boven detail**: koekjes zijn koekmannetjes (silhouet, wit glazuur, snoepknoopjes); de politieauto heeft de Nederlandse blauw-oranje striping, POLITIE op de deur en een lichtbalk.
+- **Maten**: Daan ca. 14 cm met pet, Joep knuffelformaat (ca. 6 cm), de bakker ca. 24 cm, de lange boef ca. 22 cm, de dikke boef ca. 17 cm; huizen op 1,3× schaal achter de figuren.
+- **Beeld**: per plaat een eigen standpunt en een vrije zone voor de tekst (meestal lucht of gras).
 
-## Joep (knuffelaapje, ca. 15 cm)
+## Personages
 
-- **Pluche:** kort en fluwelig, karamel- tot kastanjebruin, een beetje sleets.
-- **Gezicht:** crème, in de vorm van een breed afgerond hart over ogen, wangen, snuit en kin. Bovenop het voorhoofd bruin.
-- **Borduursel:** zwarte stipogen, een driehoekig neusje en een dun lachlijntje, als satijnsteek.
-- **Oren:** klein, rond en bruin, laag aan de zijkant, staan opzij uit.
-- **Lijf en ledematen:** klein boonvormig lijf. Lange dunne slungelarmen en -benen met ronde uiteinden; de benen zijn langer dan het lijf.
-- **Overig:** plat flapperig staartje (iets donkerder), wit ophanglusje bovenop het hoofd, zichtbare naden.
-- **Pet:** vanaf bladzijde 2 een piepklein donkerblauw politiepetje met gouden ster.
-
-## Aanpak in Blender (Cycles) — zoals gebouwd
-
-Alles staat in `../blender/` en wordt vanaf de commandline gebouwd (`blender -b -P run.py`).
-
-- **Hoofd** (`lib/head.py`): vervormde bol met volle wangen, knopneusje, mondgroef en oogkassen; blos, lippen en sproetjes als kleurattribuut; huid met subsurface. Ogen met procedurele iris, glanzende cornea en amandelvormige oogleden; mond open/dicht per uitdrukking.
-- **Haar** (`lib/hair.py`): Hair Curves. Kuif als ca. 250 lokken van parallelle strengen die over een 'haarschil' naar voren lopen en vooraan omhoog krullen; zijkanten als kort dons; donkerdere wortels via de Hair Info-intercept. Onder de pet alleen plukjes bij de slapen.
-- **Lijf** (`lib/daan.py`, `lib/body.py`): buizen langs splines met IK voor armen en benen (rekbaar, cartoonstijl), mollige handjes met vingers, schoentjes; uniform met kraag, beleg, knoopjes, borstzakken met klep, schouderlusjes, ster, riem met gesp en portofoon. Pyjama voor bedtijd.
-- **Joep** (`lib/joep.py`): pluche basis met hartvormig crème gezichtsmasker en naden als attributen, ca. 250.000 korte vachtharen (Hair Curves) met kleur per haar, geborduurde oogjes, neusje en lach, lusje, plat staartje, petje.
-- **Bijfiguren** (`lib/people.py`): lange en dikke boef (streepshirt, maskertje, muts, stoppels), bakker (koksmuts, snor, schort).
-- **Decor** (`lib/world.py`, `lib/sets.py`, `lib/props.py`): visgraatklinkers steen voor steen, stoeptegels, grassprieten als Hair Curves, bomen en struiken met losse blaadjes, Hollandse trap- en klokgevels, bakkerij met luifel, slaapkamer, kindermaat-politieauto in Nederlandse striping, koekjes, kruimels, jutezak, vergrootglas met echte lens, medailles, confetti.
-- **Licht en camera**: zon + luchtgradiënt + vlaklampen, scherptediepte per plaat, bewegingsonscherpte bij de auto, AgX-kleurbeheer; gloed en vignet in `../boek/build.py`.
-
-`proefplaat-daan-joep.jpg` is de eerste proefrender van Daan en Joep samen.
+- **Daan**: donkerblauw linnen pakje met zakjes, gouden ster, kraag, zwarte riem met zilveren gesp, witte knoopjes. Pet met zwarte band en klep en een gouden schildje. Zonder pet een blond kapsel met een pony van drie ronde lokken. Gewone kleren: rood shirt met een banaan, spijkerbroek, witte gympen. Pyjama lichtblauw met stippen.
+- **Joep**: bruin aapje van kraftpapier met een crème gezichtje en snuitje, oortjes met crème binnenkant, crème buikje, handjes en voetjes, krulstaartje, een piepklein petje.
+- **Bakker**: wit met boerenbont schort, rood sjaaltje, grijze broek, snor, koksmuts van crêpepapier.
+- **Boeven**: zwart-wit gestreepte shirts, zwarte broek, bruine schoenen, zwart masker (later omhoog), gebreide muts met bolletje (grijs met groene rand, rood met crème rand). Op het feest dragen ze een koksmuts.

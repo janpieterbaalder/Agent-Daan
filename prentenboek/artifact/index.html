@@ -1,0 +1,1141 @@
+<title>Agent Daan &amp; Joep</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@500;700&display=swap">
+<style>
+/* Layout: één stil scherm; het gebonden prentenboek ligt midden op een egale ondergrond, bediening
+   klein onderaan met een schuifbalk per dubbele pagina. Kleur: zacht warm papier met het donkerblauw
+   van het politie-uniform en het goud van de ster; letter: een ronde, vriendelijke letter zoals in het boek. */
+:root {
+  --bg: #ece8e0;
+  --panel: #f8f6f1;
+  --fg: #1d2540;
+  --muted: #5e6680;
+  --accent: #1f3a8a;
+  --accent-text: #1f3a8a;
+  --on-accent: #f4f6fb;
+  --line: #d4d0c8;
+  --paper: #fffdf7;
+  --edge-1: #e6e1d4;
+  --edge-2: #cdc6b6;
+  --sign: #18234d;
+  --sign-ink: #f2c04a;
+  --shadow-rgb: 30, 32, 48;
+  --font-label: "Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --font-ui: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11152a; --panel: #1c2240; --fg: #eef1fa; --muted: #a3abc6; --accent: #f2c04a; --accent-text: #f5cf6e;
+    --on-accent: #18234d; --line: #2f3758; --paper: #ece8dc; --edge-1: #aba493; --edge-2: #8b8475;
+    --sign: #f2c04a; --sign-ink: #18234d; --shadow-rgb: 0, 0, 0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11152a; --panel: #1c2240; --fg: #eef1fa; --muted: #a3abc6; --accent: #f2c04a; --accent-text: #f5cf6e;
+  --on-accent: #18234d; --line: #2f3758; --paper: #ece8dc; --edge-1: #aba493; --edge-2: #8b8475;
+  --sign: #f2c04a; --sign-ink: #18234d; --shadow-rgb: 0, 0, 0;
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.app > header { grid-row: 1; }
+.app > .viewport { grid-row: 2; }
+.app > footer { grid-row: 3; }
+
+header, footer { position: relative; z-index: 3; padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
+/* Inzoomen doet het boek zelf (knijpen, dubbeltikken, slepen). De browser mag de hele pagina
+   niet inzoomen: die zoom is boven het boek niet terug te draaien. */
+header, footer, .reader .top, .reader .step { touch-action: none; }
+.toc { touch-action: pan-y; }
+header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-block: 16px 4px; }
+/* het naamplaatje: donkerblauw met gouden letters, zoals de pet */
+.label {
+  font-family: var(--font-label); font-weight: 800; font-size: 19px; line-height: 1;
+  color: var(--sign-ink); background: var(--sign); padding: 7px 13px 6px; border-radius: 999px;
+  box-shadow: inset 0 0 0 1.5px rgba(242, 192, 74, .55), 0 1px 2px rgba(var(--shadow-rgb), .2);
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.label svg { width: 15px; height: 15px; fill: currentColor; }
+.sub { color: var(--muted); font-size: 13px; }
+
+.viewport {
+  position: relative; z-index: 1; min-height: 0;
+  overflow-x: hidden; overflow-x: clip; overflow-y: visible;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+/* ingezoomd: de laag met het boek schaalt en schuift; alles buiten het venster valt weg */
+.viewport.zoomed { overflow: hidden; cursor: grab; }
+.viewport.zoomed .page { cursor: inherit; }
+.viewport.panning { cursor: grabbing; }
+.zoomer { position: absolute; inset: 0; transform-origin: 0 0; }
+.shift { position: absolute; left: 50%; top: 50%; }
+.book { position: absolute; inset: 0; transform-style: preserve-3d; }
+
+.page, .face {
+  background-color: var(--paper);
+  background-repeat: no-repeat;
+  background-size: var(--pw) var(--ph), var(--pw) var(--ph);
+}
+/* --ov: rugschaduw (binnenpagina) of scharniergroef (kaft), over de pagina heen */
+.page { position: absolute; top: 0; width: var(--pw); height: var(--ph); cursor: grab; background-image: var(--ov), var(--img); }
+.page.left { left: 0; }
+.page.right { left: calc(var(--pw) + var(--gap)); }
+.viewport.dragging .page { cursor: grabbing; }
+.cast { position: absolute; inset: 0; pointer-events: none; }
+
+.rotor { position: absolute; top: 0; left: calc(var(--pw) + var(--gap) / 2); width: 0; height: var(--ph); transform-style: preserve-3d; }
+.seg { position: absolute; top: 0; left: var(--sw); width: var(--sw); height: 100%; transform-style: preserve-3d; transform-origin: 0 50%; }
+.rotor > .seg { left: calc(var(--gap) / 2); }
+.face {
+  position: absolute; top: 0; left: 0; height: 100%; width: calc(var(--sw) + 1px);
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+}
+.face.front { background-image: var(--ov-front), var(--img-front); background-position: calc(var(--sw) * var(--i) * -1) 0; }
+.face.back {
+  transform: rotateY(180deg);
+  background-image: var(--ov-back), var(--img-back);
+  background-position: calc((var(--pw) - var(--sw) * (var(--i) + 1) - 1px) * -1) 0;
+}
+.seg.last > .face { width: var(--sw); }
+.seg.last > .face.back { background-position: calc((var(--pw) - var(--sw) * (var(--i) + 1)) * -1) 0; }
+.shade { position: absolute; inset: 0; }
+
+/* ---------- onderbalk ---------- */
+footer { display: grid; gap: 2px; padding-block: 4px max(14px, env(safe-area-inset-bottom, 0px)); }
+.caption {
+  display: flex; justify-content: center; align-items: baseline; gap: 10px; min-height: 20px;
+  font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden;
+}
+.caption .chap { overflow: hidden; text-overflow: ellipsis; }
+.caption .pg, .tip .pg, .toc .pg, .reader .pgname {
+  font-family: var(--font-label); font-variant-numeric: lining-nums tabular-nums;
+}
+.caption .pg { color: var(--fg); }
+.bar { display: flex; align-items: center; gap: 4px; max-width: 920px; width: 100%; margin-inline: auto; }
+.scrub { position: relative; flex: 1; min-width: 72px; height: 40px; touch-action: none; cursor: pointer; outline: none; }
+.scrub .track { position: absolute; left: 8px; right: 8px; top: 50%; height: 2px; margin-top: -1px; background: var(--line); border-radius: 1px; }
+.scrub .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 1px; }
+.scrub .tick { position: absolute; top: -4px; width: 2px; height: 10px; margin-left: -1px; background: var(--muted); opacity: .5; border-radius: 1px; }
+.scrub .thumb {
+  position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 3px var(--bg); transition: transform .15s ease;
+}
+.scrub:hover .thumb, .scrub.active .thumb { transform: scale(1.2); }
+.scrub:focus-visible .thumb { outline: 2px solid var(--accent); outline-offset: 3px; }
+.tip {
+  position: absolute; bottom: 38px; transform: translateX(-50%); z-index: 5;
+  background: var(--fg); color: var(--bg); font-size: 12px; line-height: 1.2;
+  padding: 6px 9px; border-radius: 5px; white-space: nowrap; pointer-events: none;
+}
+.tip .pg { opacity: .7; margin-left: 8px; }
+
+button {
+  appearance: none; border: 0; background: transparent; color: var(--fg); font: inherit;
+  width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 50%;
+  cursor: pointer; transition: background-color .15s ease, opacity .15s ease;
+}
+button:hover { background: var(--line); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: .3; cursor: default; background: transparent; }
+#soundBtn[aria-pressed="true"] { color: var(--accent-text); }
+button svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- inhoudsopgave ---------- */
+.toc {
+  position: fixed; z-index: 8; left: var(--gutter-l); bottom: calc(var(--foot-h, 100px) + 6px);
+  width: min(390px, calc(100vw - 32px)); max-height: min(68vh, 600px); overflow: auto; overscroll-behavior: contain;
+  background: var(--panel); color: var(--fg); border-radius: 10px; padding-block: 6px 8px;
+  box-shadow: 0 20px 50px -14px rgba(var(--shadow-rgb), .5), 0 0 0 1px rgba(var(--shadow-rgb), .06);
+}
+.toc h2 {
+  margin: 0; padding: 10px 16px 8px; font: 700 12px/1 var(--font-ui); letter-spacing: .14em;
+  text-transform: uppercase; color: var(--muted);
+}
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc .item {
+  width: 100%; height: auto; border-radius: 0; display: flex; justify-content: space-between; align-items: baseline;
+  gap: 16px; padding: 9px 16px; text-align: left; font-size: 14px; line-height: 1.3;
+}
+.toc .item .pg { color: var(--muted); font-size: 13px; flex: none; }
+.toc .item:focus-visible { outline-offset: -2px; }
+.toc .item[aria-current="true"] { color: var(--accent-text); font-weight: 500; }
+.toc .item[aria-current="true"] .pg { color: var(--accent-text); }
+
+/* ---------- leesweergave ---------- */
+.reader { position: fixed; inset: 0; z-index: 10; background: var(--bg); display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.reader .top {
+  display: flex; align-items: center; gap: 4px;
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) var(--gutter-r) 6px var(--gutter-l);
+}
+.reader .pgname { flex: 1; min-width: 0; text-align: center; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reader .pgname .chap { font-family: var(--font-ui); color: var(--muted); margin-left: 8px; }
+.reader .stage { position: relative; overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.reader .stage.panning { cursor: grabbing; }
+.reader .layer { position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform-origin: 0 0; }
+.reader img {
+  position: absolute; display: block; height: auto; background: var(--paper); aspect-ratio: 1 / 1;
+  box-shadow: 0 10px 30px -12px rgba(var(--shadow-rgb), .45); -webkit-user-drag: none; pointer-events: none;
+}
+.reader .step {
+  position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); width: 48px; height: 48px;
+  background: var(--panel); box-shadow: 0 6px 20px -8px rgba(var(--shadow-rgb), .5);
+}
+.reader .step.prev { left: var(--gutter-l); }
+.reader .step.next { right: var(--gutter-r); }
+
+/* telefoon liggend: zo veel mogelijk boek */
+@media (max-height: 520px) and (orientation: landscape) {
+  header { display: none; }
+  .caption { display: none; }
+  footer { padding-block: 0 max(6px, env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-width: 420px) {
+  #fsBtn { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scrub .thumb { transition: none; }
+}
+</style>
+
+<div class="app">
+  <header>
+    <span class="label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.7-4.9 4.5 1.4 6.6L12 17.1 6 20.4l1.4-6.6L2.5 9.3l6.6-.7z"/></svg>Agent Daan &amp; Joep</span>
+    <span class="sub">De koekjesboeven &middot; een prentenboek voor Daan</span>
+  </header>
+
+  <div class="viewport" id="vp" role="region" aria-label="Boek">
+    <div class="zoomer" id="zoomer">
+    <div class="shift" id="shift">
+      <div class="book" id="book">
+        <div class="page left" id="pageL" role="img" hidden><div class="cast" id="castL"></div></div>
+        <div class="page right" id="pageR" role="img" hidden><div class="cast" id="castR"></div></div>
+        <div class="rotor" id="rotor" hidden></div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <footer id="foot">
+    <div class="caption" id="caption"><span class="chap" id="chap">Klik of sleep een pagina om te bladeren</span><span class="pg" id="count"></span></div>
+    <div class="bar">
+      <button id="tocBtn" aria-label="Inhoudsopgave" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h9"/></svg></button>
+      <button id="prev" aria-label="Vorige pagina"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="Bladzijde kiezen" aria-valuemin="0">
+        <div class="track"><div class="fill" id="fill"></div><div id="ticks"></div></div>
+        <div class="thumb" id="thumb"></div>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+      <button id="next" aria-label="Volgende pagina"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button id="readBtn" aria-label="Pagina vergroot lezen"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5M8 10.5h5M10.5 8v5"/></svg></button>
+      <button id="soundBtn" aria-pressed="false" aria-label="Geluid aanzetten"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" hidden/><path id="mute" d="M17 9l5 6M22 9l-5 6"/></svg></button>
+      <button id="fsBtn" aria-label="Volledig scherm"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    </div>
+  </footer>
+</div>
+
+<nav class="toc" id="toc" hidden aria-label="Inhoudsopgave">
+  <h2>Inhoud</h2>
+  <ol id="tocList"></ol>
+</nav>
+
+<div class="reader" id="reader" hidden role="dialog" aria-label="Leesweergave">
+  <div class="top">
+    <button id="rClose" aria-label="Terug naar het boek"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="pgname" id="rName"></div>
+    <button id="rOut" aria-label="Uitzoomen"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5M8 10.5h5"/></svg></button>
+    <button id="rIn" aria-label="Inzoomen"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5M8 10.5h5M10.5 8v5"/></svg></button>
+  </div>
+  <div class="stage" id="rStage"><div class="layer" id="rLayer"><img id="rImg" alt="" width="1600" height="1600" draggable="false"></div></div>
+  <button class="step prev" id="rPrev" aria-label="Vorige pagina"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <button class="step next" id="rNext" aria-label="Volgende pagina"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+</div>
+
+<script>
+(() => {
+  // Pagina's in leesvolgorde: voorkant, p. 1-18, achterkant. Blad n heeft voorkant PAGES[2n] en
+  // achterkant PAGES[2n + 1]; het eerste blad is de voorkaft (binnenkant p. 1), het laatste de achterkaft.
+  const PAGES = ["pages/p00.jpg", "pages/p01.jpg", "pages/p02.jpg", "pages/p03.jpg", "pages/p04.jpg", "pages/p05.jpg", "pages/p06.jpg", "pages/p07.jpg", "pages/p08.jpg", "pages/p09.jpg", "pages/p10.jpg", "pages/p11.jpg", "pages/p12.jpg", "pages/p13.jpg", "pages/p14.jpg", "pages/p15.jpg", "pages/p16.jpg", "pages/p17.jpg", "pages/p18.jpg", "pages/p19.jpg", "pages/p20.jpg", "pages/p21.jpg", "pages/p22.jpg", "pages/p23.jpg", "pages/p24.jpg", "pages/p25.jpg", "pages/p26.jpg", "pages/p27.jpg", "pages/p28.jpg", "pages/p29.jpg", "pages/p30.jpg", "pages/p31.jpg"];
+  const HD = [];
+  const TEXTS = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+  const N_LEAF = PAGES.length / 2;
+  const LAST = N_LEAF;                       // spreads 0..N_LEAF (0 = dicht, voorkant)
+  const ASPECT = 1;                          // 21 x 21 cm
+  const GAP = 0;                             // gebonden: de pagina's raken elkaar in de rug
+  const STRIPS = 12;
+  const A_AUTO = 32, A_DRAG = 34;            // buiging van het blad (graden aan de rand)
+  // Elke dubbele pagina heet naar een zin uit de tekst; beeldindex = paginanummer.
+  // CHAPTERS komt uit build.py (laatste regel: de achterkant)
+  const CHAPTERS = [["Omslag", null, 0], ["Titelpagina", 1], ["Dit is Daan", 3], ["De politiepet", 5], ["Nie-nu, nie-nu!", 7], ["Bij de bakker", 9], ["Kijk eens, kruimels!", 11], ["Joep klimt in de boom", 13], ["Achter de struik", 15], ["Smik, smak, smul!", 17], ["Stop! Politie!", 19], ["Sorry", 21], ["Iedereen een koekje", 23], ["Goed gedaan!", 25], ["Bedtijd", 27], ["Einde", 29], ["Achterkant", null, 31]].map(([title, p, i]) => ({ title, page: p, idx: i !== undefined && i !== null ? i : p }));
+
+  const $ = (id) => document.getElementById(id);
+  const vp = $('vp'), shiftEl = $('shift'), book = $('book'), rotor = $('rotor');
+  const pageL = $('pageL'), pageR = $('pageR'), castL = $('castL'), castR = $('castR');
+  const btnPrev = $('prev'), btnNext = $('next'), count = $('count'), chapEl = $('chap');
+  const scrub = $('scrub'), fill = $('fill'), thumb = $('thumb'), tip = $('tip'), ticks = $('ticks');
+  const reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
+
+  let s = 0, focus = 'right', single = false, touched = false;
+  let pw = 0, ph = 0, gap = 0, Dp = 1000;
+  let shiftNow = 0, slide = null, turn = null, drag = null, raf = 0, lastT = 0;
+  const queue = [];
+  const coarse = matchMedia('(pointer: coarse)');
+  const DOUBLE_MS = 300, DOUBLE_PX = 40;     // dubbeltik: tijd en afstand tussen de twee tikken
+
+  // ---------- zoomen en schuiven (boek en leesweergave) ----------
+  // Een laag die schaalt vanaf (0,0) en verschuift. getRect geeft (bij zoom 1, in coördinaten van
+  // het venster) het deel dat in beeld moet blijven; kleiner dan het venster = gecentreerd.
+  function makeZoom(host, layer, getRect, maxZ, onChange) {
+    const zm = { z: 1, x: 0, y: 0, anim: 0 };
+    zm.apply = () => {
+      layer.style.transform = (zm.z === 1 && zm.x === 0 && zm.y === 0) ? ''
+        : `translate(${zm.x.toFixed(2)}px, ${zm.y.toFixed(2)}px) scale(${zm.z.toFixed(4)})`;
+      if (onChange) onChange(zm);
+    };
+    zm.fit = (z, x, y) => {
+      const r = getRect(), W = host.clientWidth, H = host.clientHeight;
+      const lim = (lo, hi, size, v) => (hi - lo) * z <= size ? (size - (lo + hi) * z) / 2 : clamp(v, size - hi * z, -lo * z);
+      return [lim(r.l, r.r, W, x), lim(r.t, r.b, H, y)];
+    };
+    zm.set = (z, x, y) => {
+      cancelAnimationFrame(zm.anim); zm.anim = 0;
+      z = clamp(z, 1, maxZ); [x, y] = zm.fit(z, x, y);
+      if (z === 1 && Math.abs(x) < 0.5 && Math.abs(y) < 0.5 && host === vp) x = y = 0;
+      zm.z = z; zm.x = x; zm.y = y; zm.apply();
+    };
+    // zoom z waarbij het punt (px, py) van het venster op zijn plek blijft
+    zm.around = (z, px, py) => [z, px - (px - zm.x) / zm.z * z, py - (py - zm.y) / zm.z * z];
+    zm.animate = (z, x, y, ms) => {
+      cancelAnimationFrame(zm.anim);
+      z = clamp(z, 1, maxZ); [x, y] = zm.fit(z, x, y);
+      const f = { z: zm.z, x: zm.x, y: zm.y }, t0 = performance.now(), dur = reduceMQ.matches ? 0 : (ms || 280);
+      const step = (now) => {
+        const k = dur ? clamp((now - t0) / dur, 0, 1) : 1, e = ease(k);
+        zm.z = f.z + (z - f.z) * e; zm.x = f.x + (x - f.x) * e; zm.y = f.y + (y - f.y) * e;
+        if (k >= 1) { zm.z = z; zm.x = x; zm.y = y; }
+        zm.apply();
+        zm.anim = k < 1 ? requestAnimationFrame(step) : 0;
+      };
+      zm.anim = requestAnimationFrame(step);
+    };
+    zm.reset = (animated) => { if (animated) zm.animate(1, 0, 0); else zm.set(1, 0, 0); };
+    zm.zoomed = () => zm.z > 1.01;
+    return zm;
+  }
+
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const url = (i) => `url("${PAGES[i]}")`;
+  const ease = (k) => 0.5 - 0.5 * Math.cos(Math.PI * k);
+  const smooth = (k) => k * k * (3 - 2 * k);
+
+  // ---------- paginanamen en hoofdstukken ----------
+  function pageLabel(i) {
+    if (i === 0) return 'Omslag';
+    if (i === PAGES.length - 1) return 'Achterkant';
+    return 'p. ' + i;
+  }
+  function spreadLabel(sp) {
+    if (sp === 0) return 'Omslag';
+    if (sp === LAST) return 'Achterkant';
+    return `p. ${2 * sp - 1}–${2 * sp}`;
+  }
+  const pageDesc = (i) => TEXTS[i] ? `${pageLabel(i)}. ${TEXTS[i]}` : `${pageLabel(i)}, alleen tekening`;
+  const spreadOf = (i) => (i % 2 ? (i + 1) / 2 : i / 2);
+  const sideOf = (i) => (i % 2 ? 'left' : 'right');
+  function chapterAt(i) {
+    let c = CHAPTERS[0];
+    for (const ch of CHAPTERS) if (ch.idx <= i) c = ch;
+    return c;
+  }
+  const visibleIdx = () => single ? (focus === 'left' ? 2 * s - 1 : 2 * s) : (s < LAST ? 2 * s : 2 * s - 1);
+
+  // ---------- bladstroken (gebogen blad) ----------
+  const segs = [], shadeF = [], shadeB = [];
+  let parent = rotor;
+  for (let i = 0; i < STRIPS; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'seg' + (i === STRIPS - 1 ? ' last' : '');
+    const f = document.createElement('div'); f.className = 'face front'; f.style.setProperty('--i', i);
+    const b = document.createElement('div'); b.className = 'face back'; b.style.setProperty('--i', i);
+    const fs = document.createElement('div'); fs.className = 'shade'; f.append(fs);
+    const bs = document.createElement('div'); bs.className = 'shade'; b.append(bs);
+    seg.append(f, b); parent.append(seg);
+    segs.push(seg); shadeF.push(fs); shadeB.push(bs);
+    parent = seg;
+  }
+
+  // ---------- rug ----------
+  // Binnenpagina's lopen met een zachte schaduw de rug in; de harde kaft heeft een scharniergroef
+  // op een paar millimeter van de rug. Rechterpagina's hebben de rug links, linkerpagina's rechts.
+  const GUTTER = (dir) => `linear-gradient(${dir}, rgba(46,38,24,.30) 0%, rgba(46,38,24,.17) 1%, ` +
+    `rgba(46,38,24,.08) 3%, rgba(46,38,24,.03) 6.5%, rgba(46,38,24,0) 11%)`;
+  const HINGE = (dir) => `linear-gradient(${dir}, rgba(34,28,18,.26) 0%, rgba(34,28,18,.08) 1.2%, ` +
+    `rgba(255,255,255,.20) 2.3%, rgba(34,28,18,.20) 3.1%, rgba(34,28,18,.05) 4%, rgba(34,28,18,0) 5.2%)`;
+  function overlay(i) {
+    const dir = i % 2 ? '270deg' : '90deg';
+    return i === 0 || i === PAGES.length - 1 ? HINGE(dir) : GUTTER(dir);
+  }
+
+  // ---------- maatvoering ----------
+  let lastLayoutW = 0;
+  function layout() {
+    const W = vp.clientWidth, H = vp.clientHeight;
+    if (W !== lastLayoutW) { lastLayoutW = W; bz.reset(false); }   // gedraaid of breder/smaller: zoom terug
+    const compact = matchMedia('(max-height: 520px) and (orientation: landscape)').matches;
+    single = W / H < 1.05 || W < 520;
+    const availW = W - 32, availH = H * (compact ? 0.94 : 0.86);
+    pw = Math.floor(single ? Math.min(availW, availH * ASPECT) : Math.min(availW / (2 + GAP), availH * ASPECT));
+    pw = Math.max(pw, 120);
+    ph = Math.round(pw / ASPECT);
+    gap = Math.round(pw * GAP);
+    Dp = pw * 4.5;
+    const bw = pw * 2 + gap;
+    for (const [k, v] of [['--pw', pw], ['--ph', ph], ['--gap', gap], ['--sw', pw / STRIPS]]) book.style.setProperty(k, v + 'px');
+    Object.assign(shiftEl.style, { width: bw + 'px', height: ph + 'px', marginLeft: -bw / 2 + 'px', marginTop: -ph / 2 + 'px', perspective: Dp + 'px' });
+    if (s === 0) focus = 'right';
+    if (s === LAST) focus = 'left';
+    document.documentElement.style.setProperty('--foot-h', $('foot').offsetHeight + 'px');
+    if (turn) applyTurn(); else showSpread();
+    if (bz.zoomed()) bz.set(bz.z, bz.x, bz.y);   // binnen het boek houden
+  }
+
+  // ---------- statische pagina's ----------
+  // Ingezoomd tonen de open pagina's de scherpe versie (eerst laden, dan wisselen: geen leeg vlak).
+  let hdMode = false;
+  const loadedHD = new Set();
+  function setPage(el, idx) {
+    if (idx < 0 || idx >= PAGES.length) { el.hidden = true; el.dataset.idx = ''; return; }
+    el.hidden = false;
+    if (el.dataset.idx !== String(idx)) {
+      el.dataset.idx = idx;
+      el.style.setProperty('--ov', overlay(idx));
+      el.setAttribute('aria-label', pageDesc(idx));
+    }
+    const hd = hdMode && HD[idx];
+    if (!hd || loadedHD.has(hd)) { el.style.setProperty('--img', `url("${hd || PAGES[idx]}")`); return; }
+    el.style.setProperty('--img', url(idx));
+    const im = new Image();
+    im.onload = () => { loadedHD.add(hd); if (hdMode && el.dataset.idx === String(idx)) el.style.setProperty('--img', `url("${hd}")`); };
+    im.src = hd;
+  }
+  function setHD(on) {
+    hdMode = on;
+    for (const el of [pageL, pageR]) if (!el.hidden && el.dataset.idx !== '') setPage(el, +el.dataset.idx);
+  }
+  // papierranden van het boekblok naast de open pagina's
+  function stacks(nL, nR) {
+    const e = Math.max(0.6, pw / 1000);
+    const drop = `0 ${(ph * 0.018).toFixed(1)}px ${(ph * 0.045).toFixed(1)}px rgba(var(--shadow-rgb), .30)`;
+    const layers = (n, sign) => {
+      const m = n > 0 ? Math.ceil(n / N_LEAF * 6) : 0, out = [];
+      for (let j = 1; j <= m; j++) out.push(`${(sign * j * e).toFixed(2)}px ${(j * e * 0.6).toFixed(2)}px 0 var(${j % 2 ? '--edge-1' : '--edge-2'})`);
+      out.push(drop);
+      return out.join(', ');
+    };
+    pageL.style.boxShadow = layers(nL, -1);
+    pageR.style.boxShadow = layers(nR, 1);
+  }
+  function setShift(x) {
+    shiftNow = x;
+    shiftEl.style.transform = `translateX(${x.toFixed(2)}px)`;
+  }
+  function shiftFor(spread, foc) {
+    const half = (pw + gap) / 2;
+    if (single) return foc === 'left' ? half : -half;
+    if (spread === 0) return -half;
+    if (spread === LAST) return half;
+    return 0;
+  }
+
+  const cache = new Map();
+  function preload(around) {
+    for (let i = 2 * around - 4; i <= 2 * around + 6; i++) {
+      if (i < 0 || i >= PAGES.length || cache.has(i)) continue;
+      const im = new Image(); im.decoding = 'async'; im.src = PAGES[i]; cache.set(i, im);
+    }
+  }
+
+  function showSpread() {
+    rotor.hidden = true;
+    castL.style.background = castR.style.background = 'none';
+    setPage(pageL, 2 * s - 1);
+    setPage(pageR, s < LAST ? 2 * s : -1);
+    stacks(s, N_LEAF - s);
+    if (!slide) setShift(shiftFor(s, focus));
+    updateUI();
+    preload(s);
+  }
+
+  function updateUI() {
+    const label = single ? pageLabel(visibleIdx()) : spreadLabel(s);
+    count.textContent = label;
+    // bij de omslag en de achterkant zijn titel en paginanaam gelijk: dan maar één keer
+    if (touched || s > 0) { const title = chapterAt(visibleIdx()).title; chapEl.textContent = title === label ? '' : title; }
+    btnPrev.disabled = s === 0 && (!single || focus === 'right');
+    btnNext.disabled = s === LAST;
+    if (!scrubbing) setThumb(s);
+    scrub.setAttribute('aria-valuenow', s);
+    scrub.setAttribute('aria-valuetext', `${label}, ${chapterAt(visibleIdx()).title}`);
+  }
+
+  // ---------- omslaan ----------
+  // Ook voor sprongen: het blad dat omgaat toont aan de voorkant de huidige pagina en aan de
+  // achterkant de doelpagina, alsof je een bundel bladen in één keer omslaat. De kaft is karton
+  // en buigt niet.
+  function beginTurn(dir, mode, to = s + dir, toFocus = dir > 0 ? 'left' : 'right') {
+    if ((dir > 0 && s >= LAST) || (dir < 0 && s <= 0) || to === s) return null;
+    const front = dir > 0 ? 2 * s : 2 * to, back = dir > 0 ? 2 * to - 1 : 2 * s - 1;
+    turn = {
+      dir, to, toFocus, mode, phi: dir > 0 ? 0 : 1, L: 0, Loff: 0,
+      stiff: front === 0 || back === PAGES.length - 1,
+      shiftFrom: shiftNow, shiftTo: shiftFor(to, single ? toFocus : focus),
+    };
+    if (dir > 0) {
+      setPage(pageL, 2 * s - 1); setPage(pageR, to < LAST ? 2 * to : -1); stacks(s, N_LEAF - to);
+    } else {
+      setPage(pageL, 2 * to - 1); setPage(pageR, s < LAST ? 2 * s : -1); stacks(to, N_LEAF - s);
+    }
+    rotor.style.setProperty('--img-front', url(front));
+    rotor.style.setProperty('--img-back', url(back));
+    rotor.style.setProperty('--ov-front', overlay(front));
+    rotor.style.setProperty('--ov-back', overlay(back));
+    rotor.hidden = false;
+    touched = true;
+    preload(to);
+    applyTurn();
+    return turn;
+  }
+
+  function lambertFront(a) { const r = a * Math.PI / 180; return -0.45 * Math.sin(r) + 0.89 * Math.cos(r); }
+  function lambertBack(a) { const r = a * Math.PI / 180; return 0.45 * Math.sin(r) - 0.89 * Math.cos(r); }
+  function shade(l) {
+    const base = 0.89;
+    return l < base ? `rgba(30,24,14,${(Math.min(1, (base - l) / 1.34) * 0.55).toFixed(3)})`
+                    : `rgba(255,255,255,${((l - base) / 0.11 * 0.10).toFixed(3)})`;
+  }
+
+  function applyTurn() {
+    const t = turn; if (!t) return;
+    const a0 = -180 * t.phi;
+    const ang = [];
+    for (let i = 0; i < STRIPS; i++) {
+      const u = (i + 0.5) / STRIPS;
+      ang.push(clamp(a0 - t.dir * t.L * Math.pow(u, 1.6), -180, 0));
+    }
+    rotor.style.transform = `translateZ(1px) rotateY(${ang[0].toFixed(3)}deg)`;
+    segs[0].style.transform = '';
+    for (let i = 1; i < STRIPS; i++) segs[i].style.transform = `rotateY(${(ang[i] - ang[i - 1]).toFixed(3)}deg)`;
+    for (let i = 0; i < STRIPS; i++) {
+      const aL = i === 0 ? ang[0] : (ang[i - 1] + ang[i]) / 2;
+      const aR = i === STRIPS - 1 ? ang[i] : (ang[i] + ang[i + 1]) / 2;
+      shadeF[i].style.background = `linear-gradient(90deg, ${shade(lambertFront(aL))}, ${shade(lambertFront(aR))})`;
+      shadeB[i].style.background = `linear-gradient(90deg, ${shade(lambertBack(aR))}, ${shade(lambertBack(aL))})`;
+    }
+
+    // geprojecteerde punten van het blad (t.o.v. de rugas) voor de slagschaduw
+    const sw = pw / STRIPS;
+    let r0 = ang[0] * Math.PI / 180;
+    let X = gap / 2 * Math.cos(r0), Z = -gap / 2 * Math.sin(r0);
+    let xsR = -Infinity, zMax = 0, xe = 0;
+    for (let i = 0; i < STRIPS; i++) {
+      const r = ang[i] * Math.PI / 180;
+      X += sw * Math.cos(r); Z += -sw * Math.sin(r);
+      const xp = X * Dp / (Dp - Z);
+      xsR = Math.max(xsR, xp + Z * 0.38);
+      zMax = Math.max(zMax, Z); xe = xp;
+    }
+    const lift = smooth(clamp(zMax / (0.05 * pw), 0, 1));
+    if (!pageR.hidden && xsR > gap / 2) {
+      // zachte halfschaduw: dichtbij het blad het donkerst, naar buiten toe glad uitlopend
+      const a = 0.26 * lift;
+      const start = clamp(xe - gap / 2, 0, pw), end = clamp(xsR - gap / 2, start + 1, pw + 40);
+      const c = (k) => `rgba(var(--shadow-rgb),${(a * k).toFixed(3)})`;
+      const at = (f) => (start + (end - start) * f).toFixed(1) + 'px';
+      castR.style.background = `linear-gradient(90deg, ${c(1)} 0px, ${c(1)} ${start.toFixed(1)}px, ${c(.62)} ${at(.2)}, ${c(.3)} ${at(.45)}, ${c(.1)} ${at(.72)}, ${c(0)} ${at(1)})`;
+    } else castR.style.background = 'none';
+    if (!pageL.hidden && xe < -gap / 2) {
+      const a = 0.22 * lift, edge = pw + xe + gap / 2, w = 0.05 * pw + zMax * 0.25;
+      castL.style.background = `linear-gradient(90deg, rgba(var(--shadow-rgb),0) ${(edge - w).toFixed(1)}px, rgba(var(--shadow-rgb),${a.toFixed(3)}) ${edge.toFixed(1)}px, rgba(var(--shadow-rgb),${a.toFixed(3)}) 100%)`;
+    } else castL.style.background = 'none';
+
+    const q = t.dir > 0 ? t.phi : 1 - t.phi;
+    setShift(t.shiftFrom + (t.shiftTo - t.shiftFrom) * smooth(clamp(q, 0, 1)));
+  }
+
+  function targetL(t) {
+    if (reduceMQ.matches || t.stiff) return 0;
+    const q = t.dir > 0 ? t.phi : 1 - t.phi;
+    return t.mode === 'drag' ? A_DRAG * Math.sin(Math.PI * q) : A_AUTO * Math.sin(2 * Math.PI * q);
+  }
+
+  function autoTo(t, phiEnd, fast) {
+    t.mode = 'auto';
+    t.phiStart = t.phi; t.phiEnd = phiEnd;
+    t.Loff = t.L - targetL(t);
+    const base = reduceMQ.matches ? 260 : 1050;
+    t.dur = (base * Math.abs(phiEnd - t.phi) + 140) * (fast ? 0.62 : 1);
+    t.t0 = performance.now();
+    run();
+  }
+
+  function run() { if (!raf) { lastT = 0; raf = requestAnimationFrame(frame); } }
+
+  function frame(now) {
+    raf = 0;
+    const dt = lastT ? Math.min(50, now - lastT) : 16; lastT = now;
+    let busy = false;
+    if (slide) {
+      const k = clamp((now - slide.t0) / slide.dur, 0, 1);
+      setShift(slide.from + (slide.to - slide.from) * ease(k));
+      if (k >= 1) { slide = null; afterMotion(); } else busy = true;
+    }
+    const t = turn;
+    if (t) {
+      if (t.mode === 'auto') {
+        const k = clamp((now - t.t0) / t.dur, 0, 1);
+        t.phi = t.phiStart + (t.phiEnd - t.phiStart) * ease(k);
+        t.L = targetL(t) + t.Loff * (1 - k) * (1 - k);
+        if (k >= 1) { finishTurn(); return; }
+      } else {
+        t.L += (targetL(t) - t.L) * (1 - Math.exp(-dt / 70));
+      }
+      applyTurn();
+      busy = true;
+    }
+    if (busy) raf = requestAnimationFrame(frame);
+  }
+
+  function finishTurn() {
+    const t = turn; turn = null;
+    const done = (t.dir > 0 && t.phi >= 1) || (t.dir < 0 && t.phi <= 0);
+    if (done) { s = t.to; if (single) focus = t.toFocus; if (typeof playSpread === 'function') playSpread(s); }
+    if (s === 0) focus = 'right';
+    if (s === LAST) focus = 'left';
+    showSpread();
+    afterMotion();
+  }
+
+  function afterMotion() {
+    if (!turn && !slide && queue.length) {
+      const q = queue.shift();
+      if (typeof q === 'number') go(q, true); else jumpTo(q.spread, q.focus);
+    }
+  }
+
+  function slideTo(foc) {
+    focus = foc;
+    slide = { from: shiftNow, to: shiftFor(s, foc), t0: performance.now(), dur: reduceMQ.matches ? 180 : 520 };
+    touched = true;
+    updateUI(); run();
+  }
+
+  function go(dir, fast) {
+    if (bz.zoomed()) bz.reset(true);
+    if (turn || slide) { if (queue.length < 4) queue.push(dir); return; }
+    if (single) {
+      if (dir > 0 && focus === 'left' && s < LAST) return slideTo('right');
+      if (dir < 0 && focus === 'right' && s > 0) return slideTo('left');
+    }
+    const t = beginTurn(dir, 'auto');
+    if (t) autoTo(t, dir > 0 ? 1 : 0, fast);
+  }
+
+  // Spring naar een spread; in enkelpagina-weergave ook naar de juiste kant.
+  function jumpTo(sp, foc) {
+    if (bz.zoomed()) bz.reset(true);
+    sp = clamp(sp, 0, LAST);
+    if (!foc) foc = sp === 0 ? 'right' : sp === LAST ? 'left' : (sp > s ? 'left' : 'right');
+    if (sp === 0) foc = 'right';
+    if (sp === LAST) foc = 'left';
+    if (turn || slide) { queue.length = 0; queue.push({ spread: sp, focus: foc }); return; }
+    if (sp === s) { if (single && foc !== focus) slideTo(foc); return; }
+    const dir = sp > s ? 1 : -1;
+    const t = beginTurn(dir, 'auto', sp, foc);
+    if (t) autoTo(t, dir > 0 ? 1 : 0, Math.abs(sp - s) > 1);
+  }
+
+  // ---------- zoomen in het boek ----------
+  // Knijpen of dubbeltikken zoomt in; ingezoomd sleep je met één of twee vingers, dubbeltikken
+  // zoomt weer uit. Bladeren (knoppen, toetsen, inhoud) zet de zoom eerst terug.
+  const zoomer = $('zoomer');
+  function bookRect() {
+    const W = vp.clientWidth, H = vp.clientHeight, cx = W / 2 + shiftNow, m = 8;
+    let l = Infinity, r = -Infinity;
+    if (!pageL.hidden && (!single || focus === 'left')) { l = Math.min(l, cx - gap / 2 - pw); r = Math.max(r, cx - gap / 2); }
+    if (!pageR.hidden && (!single || focus === 'right')) { l = Math.min(l, cx + gap / 2); r = Math.max(r, cx + gap / 2 + pw); }
+    if (!isFinite(l)) { l = 0; r = W; }
+    return { l: l - m, r: r + m, t: H / 2 - ph / 2 - m, b: H / 2 + ph / 2 + m };
+  }
+  const bz = makeZoom(vp, zoomer, bookRect, 4, (zm) => {
+    vp.classList.toggle('zoomed', zm.z > 1.01);
+    if (!hdMode && zm.z > 1.25) setHD(true);
+    else if (hdMode && zm.z <= 1.01) setHD(false);
+  });
+
+  const ptrs = new Map();            // vingers (of muis) die nu op het boek staan
+  let pinch = null, pan = null, gestureLock = false, tapTimer = 0, lastTap = null;
+  function local(e) { const r = vp.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  function twoFingers() {
+    const [a, b] = [...ptrs.values()];
+    return { d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+  }
+  function toggleZoomAt(px, py) {
+    if (bz.zoomed()) { bz.reset(true); return; }
+    const [z, x, y] = bz.around(single ? 2.6 : 2.2, px, py);
+    bz.animate(z, x, y);
+  }
+  // Tik. Op een aanraakscherm wacht een enkele tik even of er een tweede volgt (dubbeltik = zoomen);
+  // met de muis gaat een klik direct door, behalve ingezoomd (dan zoomt dubbelklikken uit).
+  function tap(e, action) {
+    const [px, py] = local(e), now = performance.now();
+    const allowDouble = e.pointerType !== 'mouse' || bz.zoomed();
+    if (allowDouble && lastTap && now - lastTap.t < DOUBLE_MS && Math.hypot(px - lastTap.x, py - lastTap.y) < DOUBLE_PX) {
+      clearTimeout(tapTimer); lastTap = null; toggleZoomAt(px, py); return;
+    }
+    lastTap = allowDouble ? { t: now, x: px, y: py } : null;
+    clearTimeout(tapTimer);
+    if (!action) return;
+    if (!allowDouble) action();
+    else tapTimer = setTimeout(() => { lastTap = null; action(); }, DOUBLE_MS);
+  }
+
+  // ---------- slepen, klikken, vegen, knijpen ----------
+  vp.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    closeToc();
+    const [lx, ly] = local(e);
+    ptrs.set(e.pointerId, { x: lx, y: ly });
+    try { vp.setPointerCapture(e.pointerId); } catch (err) { /* zonder capture werkt het binnen het boek nog steeds */ }
+    if (ptrs.size === 2) {
+      // tweede vinger: knijpen. Een begonnen omslag gaat terug.
+      clearTimeout(tapTimer); lastTap = null;
+      if (drag) {
+        if (drag.started && turn && turn.mode === 'drag') autoTo(turn, turn.dir > 0 ? 0 : 1);
+        drag = null; vp.classList.remove('dragging');
+      }
+      if (pan) { pan = null; vp.classList.remove('panning'); }
+      if (turn || slide) { gestureLock = true; return; }
+      const g = twoFingers();
+      pinch = { d0: Math.max(g.d, 1), mx: g.mx, my: g.my, z0: bz.z, x0: bz.x, y0: bz.y };
+      return;
+    }
+    if (ptrs.size > 2 || gestureLock) return;
+    if (bz.zoomed()) {
+      pan = { id: e.pointerId, sx: lx, sy: ly, x0: bz.x, y0: bz.y, moved: false };
+      vp.classList.add('panning');
+      return;
+    }
+    if (turn || slide) return;
+    const rect = vp.getBoundingClientRect();
+    const axisX = rect.left + rect.width / 2 + shiftNow;
+    const x = e.clientX - axisX, y = e.clientY - (rect.top + rect.height / 2);
+    if (Math.abs(y) > ph / 2) return;
+    let side = 0;
+    if (x > gap / 2 && x < gap / 2 + pw && s < LAST) side = 1;
+    else if (x < -gap / 2 && x > -gap / 2 - pw && s > 0) side = -1;
+    if (!side) return;
+    drag = { id: e.pointerId, x0: e.clientX, axisX, side, u0: Math.max(Math.abs(x), pw * 0.35),
+             started: false, px: e.clientX, pt: performance.now(), vx: 0, pageX: x - side * (gap / 2 + pw / 2) };
+  });
+
+  vp.addEventListener('pointermove', (e) => {
+    if (ptrs.has(e.pointerId)) { const [lx, ly] = local(e); ptrs.set(e.pointerId, { x: lx, y: ly }); }
+    if (pinch) {
+      if (ptrs.size < 2) return;
+      const g = twoFingers();
+      const z = clamp(pinch.z0 * g.d / pinch.d0, 1, 4);
+      // het punt onder het midden van de vingers blijft eronder: zo schuif je ook met twee vingers
+      const cx = (pinch.mx - pinch.x0) / pinch.z0, cy = (pinch.my - pinch.y0) / pinch.z0;
+      bz.set(z, g.mx - cx * z, g.my - cy * z);
+      return;
+    }
+    if (pan && e.pointerId === pan.id) {
+      const [lx, ly] = local(e);
+      if (Math.hypot(lx - pan.sx, ly - pan.sy) > 6) pan.moved = true;
+      bz.set(bz.z, pan.x0 + lx - pan.sx, pan.y0 + ly - pan.sy);
+      return;
+    }
+    if (!drag || e.pointerId !== drag.id) return;
+    const now = performance.now(), dx = e.clientX - drag.x0;
+    drag.vx = 0.7 * drag.vx + 0.3 * ((e.clientX - drag.px) / Math.max(1, now - drag.pt));
+    drag.px = e.clientX; drag.pt = now;
+    if (!drag.started) {
+      if (Math.abs(dx) < 7) return;
+      // vooruit: rechterblad naar links trekken; terug: linkerblad naar rechts trekken
+      const dir = drag.side > 0 && dx < 0 ? 1 : drag.side < 0 && dx > 0 ? -1 : 0;
+      if (!dir) { drag.swipe = true; drag.started = true; return; }
+      if (!beginTurn(dir, 'drag')) { drag = null; return; }
+      drag.started = true; vp.classList.add('dragging'); run();
+    }
+    if (drag.swipe || !turn) return;
+    turn.phi = Math.acos(clamp((e.clientX - drag.axisX) / drag.u0, -1, 1)) / Math.PI;
+    run();
+  });
+
+  function endDrag(e, cancelled) {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag; drag = null;
+    vp.classList.remove('dragging');
+    if (!d.started) {
+      if (cancelled) return;
+      // tik: in enkelpagina-weergave telt de helft van de pagina, anders de pagina zelf
+      const dir = single ? (d.pageX >= 0 ? 1 : -1) : d.side;
+      tap(e, () => go(dir));
+      return;
+    }
+    if (d.swipe) { if (!cancelled) go(e.clientX < d.x0 ? 1 : -1); return; }
+    const t = turn; if (!t) return;
+    const q = t.dir > 0 ? t.phi : 1 - t.phi;
+    const v = d.vx * -t.dir;                      // positief = in de bladerrichting
+    const complete = !cancelled && (v > 0.35 || (q > 0.5 && v > -0.35));
+    autoTo(t, complete ? (t.dir > 0 ? 1 : 0) : (t.dir > 0 ? 0 : 1));
+  }
+  function pointerEnd(e, cancelled) {
+    ptrs.delete(e.pointerId);
+    if (pinch) {
+      if (ptrs.size < 2) { pinch = null; gestureLock = ptrs.size > 0; if (bz.z < 1.08) bz.reset(true); }
+      return;
+    }
+    if (gestureLock) { if (!ptrs.size) gestureLock = false; return; }
+    if (pan && e.pointerId === pan.id) {
+      const p = pan; pan = null; vp.classList.remove('panning');
+      if (!p.moved && !cancelled) tap(e, null);
+      return;
+    }
+    endDrag(e, cancelled);
+  }
+  vp.addEventListener('pointerup', (e) => pointerEnd(e, false));
+  vp.addEventListener('pointercancel', (e) => pointerEnd(e, true));
+  vp.addEventListener('dblclick', (e) => { e.preventDefault(); });
+  // touchpad-knijpen (komt binnen als ctrl+scroll) zoomt; ingezoomd schuift scrollen het beeld
+  vp.addEventListener('wheel', (e) => {
+    if (!e.ctrlKey && !bz.zoomed()) return;
+    e.preventDefault();
+    const [px, py] = local(e);
+    if (e.ctrlKey) {
+      const [z, x, y] = bz.around(clamp(bz.z * Math.exp(-e.deltaY * 0.01), 1, 4), px, py);
+      if (z <= 1.02) bz.reset(false); else bz.set(z, x, y);
+    } else bz.set(bz.z, bz.x - e.deltaX, bz.y - e.deltaY);
+  }, { passive: false });
+  // Safari: eigen knijpgebaren van de browser uitzetten (die zouden de hele pagina vergroten)
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+
+  btnPrev.addEventListener('click', () => go(-1));
+  btnNext.addEventListener('click', () => go(1));
+
+  // ---------- schuifbalk ----------
+  let scrubbing = false, scrubTarget = 0;
+  const trackEl = scrub.querySelector('.track');
+  scrub.setAttribute('aria-valuemax', LAST);
+  function posOf(sp) { return sp / LAST * 100; }
+  function setThumb(sp) {
+    fill.style.width = posOf(sp) + '%';
+    thumb.style.left = `calc(8px + (100% - 16px) * ${sp / LAST})`;
+  }
+  ticks.innerHTML = CHAPTERS.filter((c) => c.page !== null)
+    .map((c) => `<span class="tick" style="left:${posOf(spreadOf(c.idx))}%"></span>`).join('');
+  function spreadAtX(clientX) {
+    const r = trackEl.getBoundingClientRect();
+    return Math.round(clamp((clientX - r.left) / r.width, 0, 1) * LAST);
+  }
+  function showTip(sp) {
+    const i = sp === 0 ? 0 : sp === LAST ? PAGES.length - 1 : 2 * sp;
+    tip.innerHTML = '';
+    const a = document.createElement('span'); a.textContent = chapterAt(i).title;
+    const b = document.createElement('span'); b.className = 'pg'; b.textContent = spreadLabel(sp);
+    tip.append(a, b);
+    tip.hidden = false;
+    const r = scrub.getBoundingClientRect(), tr = trackEl.getBoundingClientRect();
+    const x = tr.left - r.left + tr.width * sp / LAST;
+    const half = tip.offsetWidth / 2;
+    // binnen het scherm houden
+    const minX = half - r.left + 8, maxX = window.innerWidth - r.left - half - 8;
+    tip.style.left = clamp(x, minX, maxX) + 'px';
+  }
+  scrub.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    scrubbing = true; scrub.classList.add('active'); closeToc();
+    try { scrub.setPointerCapture(e.pointerId); } catch (err) { /* niet nodig voor één klik */ }
+    scrubTarget = spreadAtX(e.clientX); setThumb(scrubTarget); showTip(scrubTarget);
+  });
+  scrub.addEventListener('pointermove', (e) => {
+    const sp = spreadAtX(e.clientX);
+    if (scrubbing) { scrubTarget = sp; setThumb(sp); }
+    if (scrubbing || e.pointerType === 'mouse') showTip(sp);
+  });
+  scrub.addEventListener('pointerleave', () => { if (!scrubbing) tip.hidden = true; });
+  function endScrub(e, cancel) {
+    if (!scrubbing) return;
+    scrubbing = false; scrub.classList.remove('active');
+    if (e.pointerType !== 'mouse') tip.hidden = true;
+    if (cancel) { setThumb(s); return; }
+    jumpTo(scrubTarget);
+  }
+  scrub.addEventListener('pointerup', (e) => endScrub(e, false));
+  scrub.addEventListener('pointercancel', (e) => endScrub(e, true));
+  scrub.addEventListener('keydown', (e) => {
+    const map = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 };
+    if (e.key in map) { e.preventDefault(); e.stopPropagation(); jumpTo(s + map[e.key]); }
+  });
+
+  // ---------- inhoudsopgave ----------
+  const toc = $('toc'), tocBtn = $('tocBtn'), tocList = $('tocList');
+  CHAPTERS.forEach((c, k) => {
+    const li = document.createElement('li');
+    const b = document.createElement('button'); b.className = 'item'; b.dataset.k = k;
+    const t = document.createElement('span'); t.textContent = c.title;
+    const p = document.createElement('span'); p.className = 'pg'; p.textContent = c.page !== null ? 'p. ' + c.page : '';
+    b.append(t, p); li.append(b); tocList.append(li);
+    b.addEventListener('click', () => { closeToc(); jumpTo(spreadOf(c.idx), sideOf(c.idx)); });
+  });
+  function openToc(byKeyboard) {
+    const cur = chapterAt(visibleIdx());
+    tocList.querySelectorAll('.item').forEach((b) => b.setAttribute('aria-current', CHAPTERS[b.dataset.k] === cur ? 'true' : 'false'));
+    toc.hidden = false; tocBtn.setAttribute('aria-expanded', 'true');
+    const curBtn = tocList.querySelector('[aria-current="true"]');
+    if (curBtn) { curBtn.scrollIntoView({ block: 'nearest' }); if (byKeyboard) curBtn.focus({ preventScroll: true }); }
+  }
+  function closeToc() { if (!toc.hidden) { toc.hidden = true; tocBtn.setAttribute('aria-expanded', 'false'); } }
+  // detail === 0: geactiveerd met Enter/spatie, dan de focus meenemen naar de lijst
+  tocBtn.addEventListener('click', (e) => { e.stopPropagation(); toc.hidden ? openToc(e.detail === 0) : closeToc(); });
+  document.addEventListener('pointerdown', (e) => { if (!toc.hidden && !toc.contains(e.target) && e.target !== tocBtn && !tocBtn.contains(e.target)) closeToc(); });
+
+  // ---------- leesweergave ----------
+  // De pagina past in de breedte; knijpen, dubbeltikken en de knoppen zoomen, slepen schuift,
+  // vegen (niet ingezoomd) gaat naar de vorige of volgende pagina.
+  const reader = $('reader'), rImg = $('rImg'), rStage = $('rStage'), rLayer = $('rLayer'), rName = $('rName');
+  const ZSTEPS = [1, 1.6, 2.5, 4];
+  let rIdx = 0, rKeyboard = false, rBox = { l: 0, t: 8, w: 300, h: 300 };
+  function readerLayout() {
+    const W = rStage.clientWidth, H = rStage.clientHeight;
+    // vierkante pagina: past in de breedte, en op een breed scherm ook in de hoogte
+    const w = Math.max(200, Math.min(W - 32, 1100, Math.max(H - 110, 320)));
+    rBox = { l: (W - w) / 2, t: 8, w, h: w / ASPECT };
+    Object.assign(rImg.style, { left: rBox.l + 'px', top: rBox.t + 'px', width: w + 'px' });
+  }
+  const rz = makeZoom(rStage, rLayer,
+    () => ({ l: rBox.l - 12, r: rBox.l + rBox.w + 12, t: 0, b: rBox.t + rBox.h + 88 }), 4,
+    (zm) => { $('rOut').disabled = zm.z <= 1.01; $('rIn').disabled = zm.z >= 3.99; });
+  function stepZoom(dir) {
+    const next = dir > 0 ? (ZSTEPS.find((v) => v > rz.z + 0.01) || 4) : ([...ZSTEPS].reverse().find((v) => v < rz.z - 0.01) || 1);
+    const [z, x, y] = rz.around(next, rStage.clientWidth / 2, rStage.clientHeight / 2);
+    rz.animate(z, x, y);
+  }
+  function showReaderPage(i) {
+    rIdx = clamp(i, 0, PAGES.length - 1);
+    rImg.src = (HD[rIdx] || PAGES[rIdx]);
+    rImg.alt = pageDesc(rIdx);
+    rName.innerHTML = '';
+    const a = document.createElement('span'); a.textContent = pageLabel(rIdx);
+    const b = document.createElement('span'); b.className = 'chap'; b.textContent = chapterAt(rIdx).title;
+    rName.append(a, b);
+    $('rPrev').disabled = rIdx === 0; $('rNext').disabled = rIdx === PAGES.length - 1;
+    rz.set(1, 0, 0);
+    const nb = new Image(); nb.src = HD[rIdx + 1] || PAGES[rIdx + 1] || '';
+  }
+  function openReader(e) {
+    closeToc();
+    if (bz.zoomed()) bz.reset(false);
+    const i = single ? visibleIdx() : (s === 0 ? 0 : s === LAST ? PAGES.length - 1 : 2 * s - 1);
+    reader.hidden = false;
+    readerLayout();
+    showReaderPage(i);
+    rKeyboard = !!(e && e.detail === 0);
+    if (rKeyboard) $('rClose').focus();   // alleen bij bediening met het toetsenbord
+  }
+  function closeReader() {
+    reader.hidden = true;
+    // het boek opent op de pagina die het laatst gelezen is
+    const sp = spreadOf(rIdx);
+    if (!turn && !slide && (sp !== s || (single && sideOf(rIdx) !== focus))) {
+      s = sp; focus = sideOf(rIdx);
+      if (s === 0) focus = 'right';
+      if (s === LAST) focus = 'left';
+      touched = true;
+      showSpread();
+    }
+    if (rKeyboard) $('readBtn').focus();
+  }
+  $('readBtn').addEventListener('click', openReader);
+  $('rClose').addEventListener('click', closeReader);
+  $('rIn').addEventListener('click', () => stepZoom(1));
+  $('rOut').addEventListener('click', () => stepZoom(-1));
+  $('rPrev').addEventListener('click', () => showReaderPage(rIdx - 1));
+  $('rNext').addEventListener('click', () => showReaderPage(rIdx + 1));
+
+  const rPtrs = new Map();
+  let rPinch = null, rPan = null, rLock = false, rLastTap = null;
+  function rLocal(e) { const r = rStage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  rStage.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const [px, py] = rLocal(e);
+    rPtrs.set(e.pointerId, { x: px, y: py });
+    try { rStage.setPointerCapture(e.pointerId); } catch (err) { /* niet nodig */ }
+    if (rPtrs.size === 2) {
+      if (rPan) { rPan = null; rStage.classList.remove('panning'); }
+      rLastTap = null;
+      const [a, b] = [...rPtrs.values()];
+      rPinch = { d0: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, z0: rz.z, x0: rz.x, y0: rz.y };
+      return;
+    }
+    if (rPtrs.size > 2 || rLock) return;
+    rPan = { id: e.pointerId, sx: px, sy: py, x0: rz.x, y0: rz.y, moved: false, t0: performance.now() };
+    rStage.classList.add('panning');
+  });
+  rStage.addEventListener('pointermove', (e) => {
+    if (!rPtrs.has(e.pointerId)) return;
+    const [px, py] = rLocal(e);
+    rPtrs.set(e.pointerId, { x: px, y: py });
+    if (rPinch) {
+      if (rPtrs.size < 2) return;
+      const [a, b] = [...rPtrs.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const z = clamp(rPinch.z0 * d / rPinch.d0, 1, 4);
+      const cx = (rPinch.mx - rPinch.x0) / rPinch.z0, cy = (rPinch.my - rPinch.y0) / rPinch.z0;
+      rz.set(z, mx - cx * z, my - cy * z);
+      return;
+    }
+    if (rPan && e.pointerId === rPan.id) {
+      if (Math.hypot(px - rPan.sx, py - rPan.sy) > 6) rPan.moved = true;
+      rz.set(rz.z, rPan.x0 + px - rPan.sx, rPan.y0 + py - rPan.sy);
+    }
+  });
+  function rEnd(e, cancelled) {
+    rPtrs.delete(e.pointerId);
+    if (rPinch) { if (rPtrs.size < 2) { rPinch = null; rLock = rPtrs.size > 0; } return; }
+    if (rLock) { if (!rPtrs.size) rLock = false; return; }
+    if (!rPan || e.pointerId !== rPan.id) return;
+    const p = rPan; rPan = null; rStage.classList.remove('panning');
+    if (cancelled) return;
+    const [px, py] = rLocal(e), dx = px - p.sx, dy = py - p.sy;
+    // vegen op ware grootte: volgende of vorige pagina
+    if (rz.z <= 1.01 && Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy) && performance.now() - p.t0 < 700) {
+      showReaderPage(rIdx + (dx < 0 ? 1 : -1)); return;
+    }
+    if (p.moved) return;
+    const now = performance.now();
+    if (rLastTap && now - rLastTap.t < DOUBLE_MS && Math.hypot(px - rLastTap.x, py - rLastTap.y) < DOUBLE_PX) {
+      rLastTap = null;
+      const [z, x, y] = rz.around(rz.z > 1.01 ? 1 : 2.5, px, py);
+      rz.animate(z, x, y);
+      return;
+    }
+    rLastTap = { t: now, x: px, y: py };
+  }
+  rStage.addEventListener('pointerup', (e) => rEnd(e, false));
+  rStage.addEventListener('pointercancel', (e) => rEnd(e, true));
+  rStage.addEventListener('dblclick', (e) => e.preventDefault());
+  rStage.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const [px, py] = rLocal(e);
+    if (e.ctrlKey) { const [z, x, y] = rz.around(clamp(rz.z * Math.exp(-e.deltaY * 0.01), 1, 4), px, py); rz.set(z, x, y); }
+    else rz.set(rz.z, rz.x - e.deltaX, rz.y - e.deltaY);
+  }, { passive: false });
+
+  // ---------- volledig scherm ----------
+  const fsBtn = $('fsBtn');
+  if (!document.documentElement.requestFullscreen) fsBtn.hidden = true;
+  fsBtn.addEventListener('click', () => {
+    const p = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    if (p && p.catch) p.catch(() => { fsBtn.hidden = true; });
+  });
+
+  // ---------- geluid bij de bladzijden ----------
+  // Klankjes worden in de browser gemaakt (geen bestanden) en spelen pas na een tik of klik.
+  const soundBtn = $('soundBtn');
+  let soundOn = false, AC = null;
+  try { soundOn = localStorage.getItem('agent-daan-geluid') === 'aan'; } catch (err) { /* geen opslag: standaard uit */ }
+  function ac() {
+    if (!soundOn) return null;
+    if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (err) { return null; } }
+    if (AC.state === 'suspended') AC.resume();
+    return AC;
+  }
+  function tone(f, at, dur, type, vol, f2) {
+    const a = ac(); if (!a) return;
+    const t0 = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'sine'; o.frequency.setValueAtTime(f, t0);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol || .12, t0 + .02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + .05);
+  }
+  function noise(dur, freq, vol) {
+    const a = ac(); if (!a) return;
+    const n = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2) * (Math.random() < .35 ? 1 : .25);
+    const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    src.buffer = buf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = .8; g.gain.value = vol;
+    src.connect(f); f.connect(g); g.connect(a.destination); src.start();
+  }
+  const SFX = {
+    blad() { noise(.18, 2600, .18); },
+    sirene() { for (let i = 0; i < 4; i++) tone(i % 2 ? 587 : 784, .2 + i * .42, .4, 'triangle', .11); },
+    boing() { tone(200, .15, .38, 'sine', .2, 640); },
+    pling() { [784, 988, 1175, 1568].forEach((f, i) => tone(f, .15 + i * .09, .55, 'sine', .08)); },
+    sip() { tone(440, .2, .3, 'triangle', .1, 330); tone(330, .48, .4, 'triangle', .1, 247); },
+    hup() { [0, .35, .7].forEach((t, i) => tone(392 + i * 90, .2 + t, .14, 'triangle', .13, 560 + i * 90)); },
+    smul() { [0, .25, .5].forEach((t) => setTimeout(() => noise(.2, 1900, .45), 150 + t * 1000)); },
+    aap() { [[520, 760], [520, 760], [760, 430], [760, 430]].forEach(([a, b], i) => tone(a, .9 + i * .19, .16, 'square', .045, b)); },
+    slaap() { [523, 523, 784, 784, 880, 880, 784].forEach((f, i) => tone(f, .2 + i * .32, .5, 'sine', .06)); },
+  };
+  // per dubbele pagina (0 = omslag)
+  const SPREAD_SFX = { 2: ['boing'], 3: ['pling'], 4: ['sirene'], 5: ['sip'], 6: ['boing'], 7: ['hup'], 9: ['smul'],
+                       10: ['sirene', 'aap'], 11: ['sip'], 12: ['smul'], 13: ['pling'], 14: ['slaap'] };
+  let lastSfx = -1;
+  function playSpread(sp) {
+    if (!soundOn || sp === lastSfx) return;
+    lastSfx = sp;
+    SFX.blad();
+    (SPREAD_SFX[sp] || []).forEach((k) => SFX[k]());
+  }
+  function renderSound() {
+    soundBtn.setAttribute('aria-pressed', String(soundOn));
+    soundBtn.setAttribute('aria-label', soundOn ? 'Geluid uitzetten' : 'Geluid aanzetten');
+    $('waves').hidden = !soundOn; $('mute').hidden = soundOn;
+  }
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    try { localStorage.setItem('agent-daan-geluid', soundOn ? 'aan' : 'uit'); } catch (err) { /* alleen voor deze keer */ }
+    renderSound();
+    if (soundOn) { lastSfx = -1; playSpread(s); }
+  });
+  renderSound();
+
+  // ---------- toetsenbord ----------
+  document.addEventListener('keydown', (e) => {
+    if (!reader.hidden) {
+      if (e.key === 'Escape') { rKeyboard = true; closeReader(); }
+      else if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); showReaderPage(rIdx + 1); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showReaderPage(rIdx - 1); }
+      else if (e.key === '+' || e.key === '=') stepZoom(1);
+      else if (e.key === '-') stepZoom(-1);
+      else if (e.key === 'ArrowDown') { e.preventDefault(); rz.set(rz.z, rz.x, rz.y - 80); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); rz.set(rz.z, rz.x, rz.y + 80); }
+      return;
+    }
+    if (!toc.hidden && e.key === 'Escape') { closeToc(); tocBtn.focus(); return; }
+    if (e.target.closest && e.target.closest('button, .toc') && (e.key === ' ' || e.key === 'Enter')) return;
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); go(1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(-1); }
+    else if (e.key === 'Home') { e.preventDefault(); jumpTo(0); }
+    else if (e.key === 'End') { e.preventDefault(); jumpTo(LAST); }
+  });
+
+  new ResizeObserver(() => { layout(); if (!reader.hidden) { readerLayout(); rz.set(rz.z, rz.x, rz.y); } }).observe(vp);
+  if (coarse.matches) chapEl.textContent = 'Veeg om te bladeren, dubbeltik om in te zoomen';
+  layout();
+})();
+</script>

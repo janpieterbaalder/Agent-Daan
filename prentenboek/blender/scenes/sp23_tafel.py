@@ -1,84 +1,63 @@
-"""p. 23-24: Samen brengen ze de koekjes terug. Iedereen krijgt er een. Joep krijgt er twee!
-Recht van boven op een ronde tafel voor de bakkerij: een bord vol koekjes, iedereen kijkt omhoog. Joep zit op de
-tafel met in elke hand een koekje."""
-import math
+"""p. 22-23: Samen brengen ze de koekjes terug. Iedereen krijgt er één. Joep krijgt er twee!
+
+Voor de bakkerij staat een lange tafel met een boerenbont kleed en een schaal koekmannetjes. Erachter: de
+boeven (masker omhoog, blij), de bakker, Daan. Rechts staat Joep op een kistje met in elke hand een koek."""
 import numpy as np
-from lib import core as K, cast, stage, sets, props as P, world as Wd
-from lib.daan import Daan
-from lib.joep import Joep, joep_mats
-from lib.people import Person, people_mats
+from lib import core as K, papierset as PS, papierscene as V
+from lib.papierpop import Daan, Joep, Mens
+
+CM = 0.01
 
 
 def main(out, opts):
-    Q = stage.setup(opts, 'spread')
-    dm = cast.char_mats()
-    jm = joep_mats(dm)
-    pm = people_mats(dm)
-    pr = P.prop_mats()
-    wm = Wd.world_mats()
-    stage.sky('#5b9be0', '#dcedf5', '#8f9a7a', 1.0)
-    stage.sun(230, 55, 4.0)
-    Wd.sidewalk('Terras', -4.5, 4.5, -3, 3, z=0.0)
-    # tafel
-    T = 0.52
-    K.lathe('Tafelpoot', [(0.28, 0.0), (0.06, 0.04), (0.05, T - 0.03), (0.0, T - 0.02)], 32, wm['metal_dark'], None)
-    cloth = K.lathe('Tafelkleed', [(0.0, T + 0.02), (0.78, T + 0.02), (0.82, T), (0.84, T - 0.12), (0.86, T - 0.2)], 96,
-                    pr['cloth_check'], None, close_bot=False)
-    P._plate('Schaal', None, (0, 0.05, T + 0.02), 0.26)
-    rng = np.random.default_rng(1)
-    kinds = ['choc', 'roze', 'ster']
-    for i in range(14):
-        a = i / 14 * 6.28 * 2.3 + rng.random() * 0.3
-        r = 0.04 + 0.16 * math.sqrt(i / 14)
-        P.cookie(f'Schaalkoek{i}', kinds[i % 3], 0.042, None,
-                 (math.cos(a) * r, 0.05 + math.sin(a) * r, T + 0.05 + 0.02 * (i % 3)),
-                 (rng.normal(0, 0.2), rng.normal(0, 0.2), rng.random() * 6), seed=40 + i)
-    for i, (x, y) in enumerate(((-0.45, -0.25), (0.48, -0.15), (-0.3, 0.45), (0.38, 0.42))):
-        K.lathe(f'Beker{i}', [(0.0, T + 0.02), (0.035, T + 0.02), (0.04, T + 0.12), (0.037, T + 0.125), (0.0, T + 0.1)],
-                32, pr['white'], None).location = (x, y, 0)
-    cam = (0.0, -2.25, 3.05)
-    look = (0.0, -2.25, 3.05)
-    # personen rond de tafel, iedereen kijkt omhoog
-    d = Daan('Daan', pose=dict(
-        root=(-0.86, -0.5, 0), yaw=-50, head=(-35, 18, 0), lean=(-0.1, 0),
-        hand_r=(-0.12, -0.25, 0.62), palm_r=(0.3, 0, 1), fdir_r=(0, -1, 0.2), fingers_r='grip', elbow_r=(-1, 0.3, -0.3),
-        hand_l=(0.17, -0.12, 0.6), palm_l=(0, -1, 0), fdir_l=(0.2, 0, 1), fingers_l='spread'),
-        expr=dict(smile=1.0, mouth='grin', open=0.5, squint=0.3, look_at=look), cap=True, mats=dm,
-        hair_density=Q['hair'])
+    V.setup(opts)
+    PS.sky(y=0.6, w=180, h=80, sun=(60, 50), clouds=((-44, 52, 0.7), (10, 58, 0.6)))
+    PS.thread('Zondraad', 0.6, 0.594, 0.5 + 0.115)
+    yh = 0.26
+    with PS.scaled((-0.04, yh, 0), 1.35):
+        PS.bakery('Bakkerij', -0.04, yh)
+    for i, (hx, w, h, col, rf, dr) in enumerate(((-0.36, 14, 16, '#8fb8a8', '#4b5d7a', '#a83b3b'),
+                                                (0.3, 14, 15, '#e9b44c', '#b8503e', '#2f6b8f'))):
+        with PS.scaled((hx, yh, 0), 1.35):
+            PS.house(f'Huis{i}', hx, yh, w, h, col, rf, dr, seed=i + 5)
+    PS.pavement('Stoep', -1.0, 1.0, yh - 0.11, yh + 0.005, kind='tegel', seed=7)
+    PS.card('Stoeprand', PS.rrect(0, 0.45, 200, 0.9, 0.3), '#b9b2a6', yh - 0.111, x=0.0)
+    PS.pavement('Weg', -1.0, 1.0, -0.6, yh - 0.111, kind='klinker', seed=8)
+    PS.bunting('Vlaggetjes', -0.45, 0.45, 0.25, yh - 0.02, n=16, sag=3.5)
+    # figuren achter de tafel
+    yt = 0.0
+    Mens('Lange', 'lang', pose=dict(loc=(-0.27, yt + 0.045, 0.0), arm_l='down', arm_r='hold', head=-5),
+         expr=dict(mouth='grin', look=(0.1, 0.0)), mask_up=True).build()
+    Mens('Dikkie', 'dik', pose=dict(loc=(-0.15, yt + 0.042, 0.0), arm_l='hold', arm_r='down', head=5),
+         expr=dict(mouth='grin', eyes='happy'), mask_up=True).build()
+    Mens('Bakker', 'bakker', pose=dict(loc=(-0.02, yt + 0.046, 0.0), arm_l='hip', arm_r='wave', head=-4),
+         expr=dict(mouth='grin', look=(0.15, 0.0))).build()
+    d = Daan('Daan', pose=dict(loc=(0.11, yt + 0.04, 0.0), arm_l='down', arm_r='hold', head=4),
+             expr=dict(mouth='grin', look=(0.15, 0.0)), cap=True)
     d.build()
-    P.cookie('Koek_daan', 'choc', 0.042, d.root, (-0.12, -0.3, 0.64), (1.4, 0, 0), seed=5)
-    j = Joep('Joep', pose=dict(
-        root=(0, 0, 0), cap=True, head=(-0.75, 0.1, 0.1), body_tilt=(-0.35, 0),
-        arm_r=[(-0.04, -0.02, 0.04), (-0.07, -0.03, 0.08), (-0.09, -0.04, 0.12)],
-        arm_l=[(0.04, -0.02, 0.04), (0.07, -0.03, 0.08), (0.09, -0.04, 0.12)],
-        leg_r=[(-0.01, -0.05, -0.12), (-0.02, -0.1, -0.14), (-0.03, -0.16, -0.14)],
-        leg_l=[(0.01, -0.05, -0.12), (0.02, -0.1, -0.14), (0.03, -0.16, -0.14)]),
-        mats=jm, fur=Q['fur'])
-    jr = j.build()
-    jr.location = (0.05, -0.5, T - 0.08)
-    jr.rotation_euler = (0, 0, 0.0)
-    jr.scale = (0.9,) * 3
-    # twee koekjes in Joeps handen (in Joep-ruimte, armen eindigen bij schouder + laatste punt)
-    P.cookie('Joepkoek_r', 'roze', 0.04, j.body, (-0.033 - 0.09, -0.002 - 0.04, 0.075 + 0.14), (1.2, 0, 0.2), seed=6)
-    P.cookie('Joepkoek_l', 'ster', 0.04, j.body, (0.033 + 0.09, -0.002 - 0.04, 0.075 + 0.14), (1.2, 0, -0.2), seed=7)
-    b = Person('Bakker', 'bakker', pose=dict(
-        root=(0.95, -0.35, 0), yaw=60, head=(-25, -15, 0), lean=(-0.1, 0),
-        hand_r=(-0.12, -0.42, 0.95), palm_r=(0.3, 0, 1), fdir_r=(0, -1, 0.2), fingers_r='grip'),
-        expr=dict(smile=1.0, squint=0.4, look_at=look), mats=pm)
-    b.build()
-    P.cookie('Koek_bakker', 'ster', 0.045, b.root, (-0.12, -0.48, 0.98), (1.4, 0, 0), seed=8)
-    L = Person('Lange', 'lang', pose=dict(
-        root=(-0.72, 0.62, 0), yaw=25, head=(-20, 5, 0), lean=(-0.05, 0),
-        hand_l=(0.14, -0.42, 1.05), palm_l=(-0.3, 0, 1), fdir_l=(0, -1, 0.2), fingers_l='grip'),
-        expr=dict(smile=1.0, squint=0.3, look_at=look), mats=pm, mask_up=0.38)
-    L.build()
-    P.cookie('Koek_lang', 'roze', 0.045, L.root, (0.14, -0.48, 1.08), (1.4, 0, 0), seed=9)
-    Dk = Person('Dikkie', 'dik', pose=dict(
-        root=(0.65, 0.72, 0), yaw=-25, head=(-20, -5, 0), lean=(-0.05, 0),
-        hand_r=(-0.25, -0.35, 0.82), palm_r=(0.3, 0, 1), fdir_r=(0, -1, 0.2), fingers_r='grip'),
-        expr=dict(smile=1.0, squint=0.5, look_at=look), mats=pm, mask_up=0.38)
-    Dk.build()
-    P.cookie('Koek_dik', 'choc', 0.045, Dk.root, (-0.25, -0.41, 0.86), (1.4, 0, 0), seed=10)
-    K.camera(cam, (0.0, 0.15, 0.75), lens=27, fstop=5.6, focus=(0, -0.3, 0.7))
-    K.light('AREA', (1.5, -2.5, 4.0), (0, 0, 0.6), energy=900, size=4.0, color=(1.0, 0.97, 0.93))
+    V.in_hand(d, 1, lambda par, loc: PS.cookie('Daankoek', 0, loc[1], 0.004, r=0.9, seed=31, parent=par, rot=10))
+    tb = PS.table('Tafel', -0.08, yt + 0.008, w=46, h=7.5, depth=2.6)
+    top, fy = tb['top'], tb['front']
+    # schaal van opzij met koekmannetjes erop, een glas melk, losse koekjes bij de boeven
+    PS.card('Schaal', PS.np.array([(-6.0, 0.0), (6.0, 0.0), (7.2, 1.1), (-7.2, 1.1)]), '#fbf7ef', fy + 0.008,
+            x=0.0, z=top + 0.0008, paper='glans')
+    PS.card('Schaalvoet', PS.rrect(0, 0, 4.0, 0.5, 0.2), '#e9e2d2', fy + 0.0084, x=0.0, z=top + 0.0006,
+            paper='glans')
+    for i, x in enumerate((-0.045, -0.022, 0.0, 0.022, 0.045)):
+        PS.cookie(f'Schaalkoek{i}', x, fy + 0.0095, top + 0.0105 + 0.002 * (i % 2), r=0.95, seed=70 + i,
+                  rot=(-12 + 6 * i))
+    for i, (x, rot) in enumerate(((-0.215, 0), (-0.185, 10), (-0.155, -8))):
+        PS.cookie(f'Tafelkoek{i}', x, fy + 0.006, top + 0.0095, r=0.9, seed=60 + i, rot=rot)
+    PS.card('Melk', PS.rrect(0, 1.3, 1.5, 2.6, 0.35), '#fbf7ef', fy + 0.007, x=0.075, z=top + 0.0008, paper='glans')
+    PS.card('Melkglas', PS.rrect(0, 1.5, 1.8, 3.0, 0.4), '#d8ecf6', fy + 0.0062, x=0.075, z=top + 0.0006,
+            paper='raam')
+    # Joep op een kistje rechts, met twee koeken
+    PS.crate('Kistje', 0.25, -0.06, w=7, h=5)
+    j = Joep('Joep', pose=dict(loc=(0.25, -0.065, 0.05), arm_l='cheer', arm_r='cheer', head=6),
+             expr=dict(mouth='grin', eyes='happy'), cap=True)
+    j.build()
+    for side in (-1, 1):
+        V.in_hand(j, side, lambda par, loc, side=side: PS.cookie(f'Joepkoek{side}', 0, loc[1], 0.006, r=1.3,
+                                                                  seed=80 + side, parent=par, rot=side * 15))
+    V.cam((0.0, -0.84, 0.13), (0.0, 0.0, 0.12), lens=38, fstop=8.0, focus=(0.0, 0.0, 0.1))
     K.render(out)

@@ -1,67 +1,44 @@
-"""p. 15-16: Joep ziet iets. Daar, achter de struik! Over Joeps schouder vanuit de boom omlaag: het kruimelspoor
-loopt naar een struik; daarachter een gestreepte rug, een rode muts en de zak. Daan klein onder aan de boom."""
-import math
+"""p. 14-15: Joep ziet iets. Daar, achter de struik!
+
+Dezelfde grote boom als op de vorige bladzijde, links. Joep zit op een tak en wijst; Daan staat onder de
+boom en kijkt naar hem op. Rechts in het park staat een struik: daarachter zitten de twee boeven, hun
+mutsen en maskers steken er duidelijk bovenuit. Naast de struik de zak met koekmannetjes, en een spoor
+van kruimels loopt erheen."""
 import numpy as np
-from lib import core as K, cast, stage, sets, props as P, world as Wd
-from lib.daan import Daan
-from lib.joep import Joep, joep_mats
-from lib.people import Person, people_mats
+from lib import core as K, papierset as PS, papierscene as V
+from lib.papierpop import Daan, Joep, Mens
+
+CM = 0.01
 
 
 def main(out, opts):
-    Q = stage.setup(opts, 'spread')
-    dm = cast.char_mats()
-    jm = joep_mats(dm)
-    pm = people_mats(dm)
-    sm = sets.set_mats()
-    stage.sky('#4d8fdb', '#cfe6f3', '#8f9a7a', 1.0)
-    stage.sun(200, 48, 4.3)
-    sets.park(None, Q, grass_region=(-1.0, 4.5, 0.5, 7.5), trees=[(-3.5, 9, 6, 2.0), (5.5, 10, 5.5, 1.8)],
-              bushes=[(1.6, 4.3, 1.05), (-0.8, 6.8, 0.8), (3.9, 6.2, 0.9)], path=True, flowers_n=30, houses=True,
-              grass_density=1800)
-    # boom met een lange tak naar de struik toe; het blad staat achter en boven de camera
-    bark = Wd.world_mats()['bark']
-    K.tube('Stam', [(0, -0.3, -0.05), (0.02, -0.28, 1.2), (0.0, -0.25, 2.4), (-0.1, -0.3, 3.6)],
-           [0.26, 0.21, 0.18, 0.13], bark, None, ring=28, per=8)
-    K.tube('Tak', [(0.0, -0.27, 2.25), (0.15, 0.25, 2.38), (0.35, 0.9, 2.45), (0.55, 1.5, 2.55), (0.7, 1.9, 2.62)],
-           [0.12, 0.095, 0.075, 0.055, 0.04], bark, None, ring=16, per=6)
-    Wd.foliage('Takblad', [((0.85, 2.15, 2.85), 0.42), ((0.5, 1.6, 3.05), 0.32), ((-0.6, -0.8, 4.0), 0.9),
-                           ((0.6, -0.9, 4.2), 0.8)], None, leaf_size=0.08, density=int(700 * Q['leaves']), seed=7)
-    # kruimelspoor over het pad naar de struik
-    rng = np.random.default_rng(3)
-    t = np.linspace(0, 1, 60)
-    xs = -0.2 + 1.8 * t + rng.normal(0, 0.05, 60)
-    ys = 1.4 + 2.6 * t + rng.normal(0, 0.05, 60)
-    P.crumbs('Spoor', np.stack([xs, ys, np.full(60, 0.01)], 1), rng.uniform(0.008, 0.016, 60), seed=2)
-    # boeven achter de struik (zittend, van boven zichtbaar)
-    Person('Lange', 'lang', pose=dict(root=(1.3, 4.95, 0), yaw=150, hip=(0, 0, 0.14), lean=(0.3, 0),
-                                      foot_r=(-0.12, -0.5, 0.075), foot_l=(0.12, -0.48, 0.075),
-                                      knee_r=(0, -0.3, 1), knee_l=(0, -0.3, 1),
-                                      hand_r=(-0.05, -0.32, 0.6), hand_l=(0.1, -0.3, 0.45)),
-           expr=dict(smile=1.0, squint=0.5), mats=pm).build()
-    Person('Dikkie', 'dik', pose=dict(root=(2.2, 4.85, 0), yaw=200, hip=(0, 0, 0.16), lean=(0.2, 0),
-                                      foot_r=(-0.18, -0.45, 0.075), foot_l=(0.18, -0.45, 0.075),
-                                      knee_r=(0, -0.3, 1), knee_l=(0, -0.3, 1),
-                                      hand_r=(-0.1, -0.35, 0.55), hand_l=(0.1, -0.35, 0.55)),
-           expr=dict(smile=1.0, squint=0.5), mats=pm, puff=0.1).build()
-    P.sack('Zak', None, (1.75, 5.25, 0), (0, 0, 0.5), size=0.45, open_=True)
-    # Joep op de tak, van achteren, wijst naar de struik
-    j = Joep('Joep', pose=dict(
-        root=(0, 0, 0), cap=True, head=(0.35, -0.2, 0.0), body_tilt=(0.15, 0.0),
-        arm_r=[(-0.03, -0.05, -0.02), (-0.05, -0.1, -0.05), (-0.06, -0.15, -0.08)],
-        arm_l=[(0.04, -0.01, -0.04), (0.06, 0.0, -0.08), (0.07, 0.02, -0.12)],
-        leg_r=[(-0.01, -0.04, -0.05), (-0.015, -0.03, -0.1), (-0.02, -0.02, -0.15)],
-        leg_l=[(0.01, -0.04, -0.05), (0.02, -0.02, -0.1), (0.03, 0.0, -0.15)],
-        tail=[(0.0, 0.04, -0.05), (0.0, 0.05, -0.1), (0.01, 0.04, -0.15)]),
-        mats=jm, fur=Q['fur'])
-    jr = j.build()
-    jr.location = (0.3, 0.72, 2.38)
-    jr.rotation_euler = (0, 0, math.pi + 0.35)
-    d = Daan('Daan', pose=dict(root=(0.45, 0.25, 0), yaw=200, head=(-40, 0, 0),
-                               hand_r=(-0.1, -0.12, 0.88), fdir_r=(0, -0.2, 1), fingers_r='spread', palm_r=(0, -1, 0)),
-             expr=dict(smile=0.5, mouth='o', open=0.4, look_at=(0.3, 0.72, 2.7)), cap=True, mats=dm,
-             hair_density=Q['hair'] * 0.6)
-    d.build()
-    K.camera((-0.12, 0.05, 2.92), (1.5, 4.2, 0.4), lens=24, fstop=8.0, focus=(1.4, 4.4, 0.4), roll=-0.05)
-    K.light('AREA', (-2.0, -1.0, 4.0), (1.0, 3.0, 0.5), energy=400, size=4.0, color=(0.9, 0.95, 1.0))
+    V.setup(opts)
+    PS.sky(y=0.6, w=180, h=85, sun=(60, 52), clouds=((-10, 56, 0.7), (36, 62, 0.6)))
+    PS.thread('Zondraad', 0.6, 0.594, 0.52 + 0.115)
+    PS.hills(y0=0.52, w=180, seed=7)
+    PS.tree('Boom1', 0.48, 0.42, 13, 6, seed=5)
+    PS.grassland(y0=-0.6, y1=0.55)
+    PS.flowers('Bloem', -0.6, 0.6, 0.2, 16, seed=6)
+    # de grote boom links met Joep op de rechtertak
+    tx, ty, h = -0.3, 0.06, 26
+    PS.big_tree('Grote_boom', tx, ty, h=h, apples=5)
+    Joep('Joep', pose=dict(loc=(tx + 0.085, ty - 0.004, (h - 1.6) * CM), arm_l='salute', arm_r='point', legs='sit',
+                           head=-6), expr=dict(mouth='o', brows='up', look=(0.3, -0.1)), cap=True).build()
+    Daan('Daan', pose=dict(loc=(tx + 0.1, -0.06, 0.0), arm_r='point', arm_l='down', head=10),
+         expr=dict(mouth='o', brows='up', look=(-0.1, 0.35)), cap=True).build()
+    # de boeven achter de struik: mutsen en maskers erboven
+    bx, by = 0.2, 0.08
+    Mens('Lange', 'lang', pose=dict(loc=(bx - 0.055, by + 0.025, -0.044), arm_l='down', arm_r='down', legs='sit',
+                                    head=-5), expr=dict(mouth='grin', look=(-0.2, 0.0))).build()
+    Mens('Dikkie', 'dik', pose=dict(loc=(bx + 0.06, by + 0.022, -0.012), arm_l='down', arm_r='down', legs='sit',
+                                    head=6), expr=dict(mouth='grin', look=(-0.2, 0.0))).build()
+    PS.bush('Struik', bx, by, 36, 11, berries=6, seed=11)
+    PS.sack('Zak', bx + 0.19, by - 0.01, 0.0, s=1.0, cookies_out=3)
+    rng = np.random.default_rng(6)
+    pts = [(-0.05 + 0.25 * t + rng.normal(0, 0.006), -0.12 + 0.18 * t + rng.normal(0, 0.005))
+           for t in np.linspace(0, 1, 40)]
+    PS.crumbs('Kruimel', pts, seed=6, z=0.0012, size=1.6)
+    for i, (x, y) in enumerate(((-0.46, -0.3), (-0.1, -0.34), (0.2, -0.32), (0.48, -0.3))):
+        PS.tuft(f'Pol{i}', x, y, h=4.0, w=7, color='#5f9a3f', seed=i + 2)
+    V.cam((0.0, -0.84, 0.1), (0.0, 0.0, 0.135), lens=36, fstop=8.0, focus=(0.0, 0.0, 0.12))
     K.render(out)

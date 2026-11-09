@@ -1,84 +1,45 @@
-"""p. 7-8: Nie-nu, nie-nu! Daar gaat de politieauto.
-Lage camera op straathoogte, groothoek, scheve horizon; de camera rijdt mee met de auto (achtergrond
-bewogen, auto scherp). Daan stuurt, Joep hangt juichend uit de auto."""
+"""p. 6-7: Nie-nu, nie-nu! Daar gaat de politieauto.
+
+Door de polder: een weggetje langs de sloot, een molen op de dijk, koeien-groen. De politieauto rijdt
+naar rechts met Daan achter het stuur en Joep achterin; zwaailicht aan, stofwolkjes en snelheidsstreepjes
+erachter. Links boven en links onder blijft ruimte voor de tekst."""
 import math
-import numpy as np
-from mathutils import Vector, Matrix, Euler
-from lib import core as K, cast, stage, props as P, world as Wd, sets
-from lib.daan import Daan
-from lib.joep import Joep, joep_mats
+from lib import core as K, papierset as PS, papierscene as V
+from lib.papierpop import Daan, Joep
+
+CM = 0.01
 
 
 def main(out, opts):
-    Q = stage.setup(opts, 'spread')
-    dm = cast.char_mats()
-    jm = joep_mats(dm)
-    P.prop_mats()
-    wm = Wd.world_mats()
-    stage.sky('#4f93df', '#d6ebf6', '#8f9a7a', 1.0)
-    stage.sun(205, 38, 4.0)
-    stage.clouds('Wolk', [(-14, 32, 9), (6, 40, 12), (22, 30, 8), (-30, 45, 14)], scale=2.2)
-
-    sets.street(None, bakery_x=-6.0, quality=Q, cob=(-9, 7, -3.2, 2.6), y_fac=5.0)
-    stage.clouds('Wolk2', [(-40, 18, 12), (-48, 2, 15), (-36, 34, 17)], scale=2.2)
-
-    # auto-rig: rijdt naar links-voor
-    hd = np.array([-0.6, -0.8])
-    heading = math.atan2(hd[0], -hd[1])
-    rig = K.empty('AutoRig', (-0.55, -0.6, 0.0), (0, 0, heading))
-    car, wheels = P.police_car('Politieauto', rig, (0, 0, 0), 0.0, wheel_spin=0.0, scale=0.62)
-    sl = np.array(car['seat_l'])
-    sr = np.array(car['seat_r'])
-    wh = np.array(car['wheel_hand'])
-    z0 = sl[2] - 0.29 + 0.02
-    cam_world = Vector((0.05, -2.45, 0.26))
-    d = Daan('Daan', pose=dict(
-        root=(0, 0, 0), lean=(0.12, 0.0), head=(-4, -22, 8),
-        hand_l=(wh[0] - sl[0] + 0.075, wh[1] - sl[1] + 0.02, wh[2] - z0 + 0.03), palm_l=(-0.4, 0.3, -0.6),
-        fdir_l=(0.2, -0.6, 0.6), fingers_l='grip', elbow_l=(0.6, 0.5, -0.4),
-        hand_r=(wh[0] - sl[0] - 0.075, wh[1] - sl[1] + 0.02, wh[2] - z0 + 0.03), palm_r=(0.4, 0.3, -0.6),
-        fdir_r=(-0.2, -0.6, 0.6), fingers_r='grip', elbow_r=(-0.6, 0.5, -0.4),
-        foot_r=(-0.07, -0.26, 0.12), foot_l=(0.07, -0.26, 0.12), knee_r=(0, -1, 0.8), knee_l=(0, -1, 0.8)),
-        expr=dict(smile=1.0, mouth='grin', open=0.55, squint=0.25, look_at=(0.05, -2.45, 0.26)), cap=True, mats=dm,
-        hair_density=Q['hair'])
-    dr = d.build()
-    dr.parent = rig
-    dr.location = (sl[0], sl[1], z0)
-    j = Joep('Joep', pose=dict(
-        root=(0, 0, 0), rot=(0, 0, 0), cap=True, head=(-0.25, 0.2, 0.25), cap_tilt=(-0.8, 0.5, 0.4),
-        body_tilt=(0.25, -0.1),
-        arm_r=[(-0.04, 0.03, 0.03), (-0.06, 0.08, 0.04), (-0.07, 0.13, 0.05)],
-        arm_l=[(0.04, -0.02, 0.06), (0.07, -0.03, 0.12), (0.09, -0.02, 0.17)],
-        leg_r=[(-0.01, -0.05, -0.0), (-0.02, -0.1, -0.02), (-0.025, -0.13, -0.07)],
-        leg_l=[(0.01, -0.05, 0.0), (0.03, -0.1, -0.01), (0.04, -0.12, -0.06)],
-        tail=[(0.0, 0.04, -0.01), (0.03, 0.08, 0.01), (0.06, 0.1, 0.0)]),
-        mats=jm, fur=Q['fur'])
-    jr = j.build()
-    jr.parent = rig
-    jr.location = (0.1, -0.36, 0.39)
-    jr.rotation_euler = (0, 0, 0.75)
-    jr.scale = (0.82,) * 3
-
-    # camera rijdt mee
-    target = Vector((-0.9, -0.5, 0.75))
-    cam = K.camera(tuple(cam_world), tuple(target), lens=17, fstop=5.0, focus=(-0.5, -0.7, 0.75), roll=-0.14,
-                   shift=(-0.12, -0.02))
-    sc = K.bpy.context.scene if hasattr(K, 'bpy') else None
-    import bpy
-    sc = bpy.context.scene
-    speed = Vector((math.sin(heading) * -1, math.cos(heading), 0))  # lokale -y naar wereld
-    fwd = Vector((-math.sin(-heading), -math.cos(-heading), 0))
-    move = Vector((hd[0], hd[1], 0)).normalized() * 0.3
-    K.keyframe_move(rig, move)
-    K.keyframe_move(cam, move)
-    for w in wheels:
-        K.keyframe_rot(w, 'x', -1.6)
-    sc.frame_set(1)
-    sc.render.use_motion_blur = True
-    sc.render.motion_blur_shutter = 1.0
-    sc.frame_current = 1
-
-    # licht: koele invul van links, warme zon, lichte rim voor de figuren
-    K.light('AREA', (-2.5, -4.5, 2.5), (-0.3, -0.8, 0.6), energy=600, size=4.0, color=(0.85, 0.92, 1.0))
-    K.light('AREA', (1.5, 1.8, 2.4), (-0.3, -0.8, 0.7), energy=300, size=1.5, color=(1.0, 0.92, 0.8))
+    V.setup(opts)
+    clouds = ((-46, 42, 0.8), (-10, 50, 0.6), (40, 44, 0.75))
+    PS.sky(y=0.55, w=180, h=75, sun=(60, 46), clouds=clouds)
+    for i, (cx, cz, s) in enumerate(clouds):
+        PS.thread(f'Wolkdraad{i}', cx * CM, 0.55 - 0.009 - 0.002 * i, cz * CM + 0.045 * s)
+    PS.thread('Zondraad', 0.6, 0.544, 0.46 + 0.115)
+    PS.hills(y0=0.48, w=180, colors=('#a8d07a', '#93c264', '#7fb352'), seed=5)
+    PS.windmill('Molen', -0.34, 0.4, s=1.25, rot=20)
+    for i, (tx, ty, th, tr) in enumerate(((-0.05, 0.36, 13, 6), (0.04, 0.37, 11, 5), (0.44, 0.34, 14, 6.5))):
+        PS.tree(f'Boom{i}', tx, ty, th, tr, seed=i + 4)
+    # sloot met riet achter de weg
+    PS.flat('Sloot', PS.rrect(0, 22, 200, 5, 0.5), '#5f9fcf', z=0.0008, thick=0.0006, paper='zijde')
+    for i, x in enumerate((-0.6, -0.42, 0.28, 0.52)):
+        PS.tuft(f'Riet{i}', x, 0.19, h=6.5, w=4, color='#6f9a3a', seed=10 + i, n=5)
+    PS.grassland(y0=-0.6, y1=0.5, color='#8cc35e')
+    PS.road('Weg', -1.0, 1.0, -0.04, 0.12)
+    # auto
+    car = PS.police_car('Auto', 0.17, 0.04, facing=1, scale=1.0)
+    car['root'].rotation_euler[1] = math.radians(-2.5)
+    Daan('Daan', pose=dict(loc=car['driver'], arm_r='forward', arm_l='forward', legs='sit', head=-3),
+         expr=dict(mouth='grin', look=(0.2, 0.0)), cap=True).build()
+    Joep('Joep', pose=dict(loc=car['back'], arm_r='wave', arm_l='down', legs='sit', head=6),
+         expr=dict(mouth='grin'), cap=True).build()
+    for i, (x, z, s) in enumerate(((-0.05, 0.02, 1.4), (-0.1, 0.035, 1.1), (-0.145, 0.05, 0.8), (-0.185, 0.06, 0.55))):
+        PS.puff(f'Stof{i}', x, 0.035 - 0.002 * i, z, s=s, col='#f3ede0')
+    PS.speedlines('Vaart', -0.03, 0.03, 0.09, n=3, L=9, gap=2.2)
+    # voorgrond: gras en bloemen
+    for i, (x, y) in enumerate(((-0.5, -0.28), (-0.2, -0.32), (0.1, -0.3), (0.42, -0.31))):
+        PS.tuft(f'Pol{i}', x, y, h=4.0, w=7, color='#5f9a3f', seed=i)
+    PS.flowers('Bloem', -0.55, 0.55, -0.22, 16, seed=8)
+    V.cam((0.0, -0.84, 0.1), (0.0, 0.0, 0.11), lens=38, fstop=8.0, focus=(0.17, 0.04, 0.08))
     K.render(out)

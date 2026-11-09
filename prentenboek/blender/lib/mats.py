@@ -317,6 +317,7 @@ def eye(name='Oog', iris='#6f8fae', iris2='#3f5f7f', pupil_r=0.2, iris_r=0.48):
     col = g.mix(1.0, irisc, g.comb(shade, shade, shade), blend='MULTIPLY')
     p = g.principled(color=col, rough=0.03, coat=1.0, coat_rough=0.0, spec=0.6, sss=0.08,
                      sss_radius=(0.5, 0.3, 0.3), sss_scale=0.004)
+    g.m['nofelt'] = 1
     return g.done(p)
 
 
@@ -415,6 +416,7 @@ def thread(name='Borduurgaren', color='#0d0c0c', scale=900.0, axis='X'):
     w = g.wave(co, scale, 'BANDS', axis, 'SIN', distortion=1.5, detail=1)
     p = g.principled(color=C(color), rough=0.38, sheen=0.6, sheen_rough=0.3, spec=0.5, aniso=0.6)
     g.set(p, 'Normal', g.bump(w, 0.6, 0.0008))
+    g.m['nofelt'] = 1
     return g.done(p)
 
 
@@ -554,3 +556,16 @@ def burlap(name='Jute', color='#b48c58'):
 
 def ground_cobble(name='Klinker'):
     return vertex_colored(name, rough=0.82, bump=0.35, bump_scale=45.0)
+
+
+def cornea(name='Hoornvlies', ior=1.376):
+    """Glas voor camera- en reflectiestralen, doorzichtig voor schaduwstralen (geen zwarte iris)."""
+    g = NT(name)
+    lp = g.n('ShaderNodeLightPath')
+    gl = g.n('ShaderNodeBsdfGlass', {'Color': (1, 1, 1, 1), 'Roughness': 0.0, 'IOR': ior})
+    tr = g.n('ShaderNodeBsdfTransparent', {'Color': (1, 1, 1, 1)})
+    mx = g.n('ShaderNodeMixShader')
+    g.set(mx, 0, g._out(lp, 'Is Shadow Ray'))
+    g.set(mx, 1, gl)
+    g.set(mx, 2, tr)
+    return g.done(mx)

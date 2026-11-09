@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from mathutils import Vector, Matrix, Euler
 from . import core as K, body as B, hair as H
-from .head import Head
+from .head2 import Head
 from .body import nrm, ik2, frame_from
 
 HEAD_S = 0.152
@@ -117,6 +117,8 @@ class Daan:
             B.hand(self.name + f'_hand{k}', wrist, fdir, palm, side, m['skin'], self.root, curl=p['fingers_' + k],
                    scale=1.2)
             self.wrists[k] = (wrist, fdir, palm)
+            if self.outfit == 'uniform':
+                self._ring_stitch(self.name + f'_stiksel_manchet{k}', W - fdir * 0.0115, fdir, 0.0393)
 
     # ------------------------------------------------------------------ benen
     def _legs(self, pants):
@@ -158,7 +160,7 @@ class Daan:
         piv.rotation_mode = 'YXZ'
         piv.rotation_euler = (lf * 0.85 + pitch, ls * 0.85 + roll, p['twist'] + yaw)
         # hoofd: midden boven en iets voor de nek
-        hloc = (0, -0.014, 0.128)
+        hloc = (0, -0.012, 0.108)
         if 'look_at' in self.expr:
             rl = Vector(p['root'])
             Mroot = Matrix.Translation(rl) @ Euler((0, 0, math.radians(p['yaw']))).to_matrix().to_4x4()
@@ -171,14 +173,14 @@ class Daan:
         self.head = Head(self.name + '_hoofd', expr=self.expr)
         self.head.build(piv, m, scale=HEAD_S, loc=hloc)
         self.head.brows(m, m['brow'])
-        cap_line = lambda D: 0.36 - 0.06 * D[:, 1]
+        cap_line = lambda D: 0.5 - 0.07 * D[:, 1]
         hs = self.hair
         if hs == 'kuif':
             H.build(self.head, m, 'kuif', n_top=int(60000 * self.hd), n_short=int(110000 * self.hd))
         elif hs == 'pet':
-            H.build(self.head, m, 'pet', n_short=int(90000 * self.hd), cap_line=cap_line)
+            H.build(self.head, m, 'pet', n_short=int(110000 * self.hd), cap_line=cap_line, pony=True)
         if self.cap:
-            B.police_cap(self.name + '_pet', self.head.root, m, loc=(0, 0.0, 0.36), rot=(-0.06, 0, 0), scale=1.0)
+            B.police_cap(self.name + '_pet', self.head.root, m, loc=(0, 0.1, 0.6), rot=(-0.1, 0, 0), scale=1.05)
         self.piv = piv
 
     # ------------------------------------------------------------------ uniform
@@ -214,6 +216,53 @@ class Daan:
         K.modifier(ob, 'BEVEL', width=thick * 0.45, segments=2, limit_method='ANGLE')
         return ob
 
+    def _path(self, tube, az, off, per=40):
+        """Lijn over het rompoppervlak door punten (hoek, z); geeft punten en normalen."""
+        az = np.asarray(az, float)
+        A, Z = [], []
+        for i in range(len(az) - 1):
+            t = np.linspace(0, 1, per, endpoint=False)
+            A.append(az[i, 0] + (az[i + 1, 0] - az[i, 0]) * t)
+            Z.append(az[i, 1] + (az[i + 1, 1] - az[i, 1]) * t)
+        A.append([az[-1, 0]])
+        Z.append([az[-1, 1]])
+        A, Z = np.concatenate(A), np.concatenate(Z)
+        P, N = [], []
+        for a, z in zip(A, Z):
+            pnt, n = self._surf(tube, self._u_at_z(tube, z), a, off)
+            P.append(pnt)
+            N.append(n)
+        return np.array(P), np.array(N)
+
+    def _stitches(self, name, P, Nn, dash=0.0052, gap=0.0034, r=0.0008):
+        """Rijgsteek: korte stukjes garen die in en uit de stof duiken."""
+        mat = self.m.get('stitch_thread')
+        if mat is None:
+            from . import mats as MM
+            mat = self.m['stitch_thread'] = MM.thread('Stiksel', '#a6b5dc', scale=3000)
+        P, Nn = np.asarray(P, float), np.asarray(Nn, float)
+        s = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))])
+        strands = []
+        x = gap * 0.5
+        lift = np.array([-0.0007, 0.0004, 0.0004, -0.0007])
+        while x + dash < s[-1]:
+            ts = np.linspace(x, x + dash, 4)
+            q = np.stack([np.interp(ts, s, P[:, i]) for i in range(3)], 1)
+            n = np.stack([np.interp(ts, s, Nn[:, i]) for i in range(3)], 1)
+            n /= np.linalg.norm(n, axis=1, keepdims=True) + 1e-12
+            strands.append(q + n * lift[:, None])
+            x += dash + gap
+        if strands:
+            K.hair(name, strands, (r, r * 0.9), mat, self.root)
+
+    def _ring_stitch(self, name, c, axis, rad):
+        axis = nrm(axis)
+        e1 = nrm(np.cross(axis, [0, 0, 1]) if abs(axis[2]) < 0.9 else np.cross(axis, [1, 0, 0]))
+        e2 = np.cross(axis, e1)
+        th = np.linspace(0, 2 * math.pi, 140)
+        Nn = np.cos(th)[:, None] * e1 + np.sin(th)[:, None] * e2
+        self._stitches(name, c + Nn * rad, Nn)
+
     def _button(self, name, pos, n, mat, r=0.0055, h=0.0025):
         # knoop: platte cilinder (blob) met de as langs de normaal
         ob = K.blob(name, (r, r, h), 3.0, (24, 12), mat=mat, parent=self.root)
@@ -230,6 +279,9 @@ class Daan:
         # knoopsluiting (beleg) midden voor
         self._patch(self.name + '_beleg', t, zb, z_top - 0.05, -0.085, 0.085, 0.0005, m['navy'], thick=0.0025,
                     nu=6, nv=14)
+        for s_ in (-1, 1):
+            P_, N_ = self._path(t, [(s_ * 0.062, zb + 0.004), (s_ * 0.062, z_top - 0.052)], 0.0036)
+            self._stitches(self.name + f'_stiksel_beleg{s_}', P_, N_)
         for i, z in enumerate(np.linspace(zb + 0.03, z_top - 0.075, 4)):
             u = self._u_at_z(t, z)
             pnt, n = self._surf(t, u, 0.0, 0.003)
@@ -242,6 +294,13 @@ class Daan:
                         round_bottom=0.6)
             self._patch(self.name + f'_klep{s}', t, zc - 0.002, zc + 0.016, a0 - 0.03, a1 + 0.03, 0.0035,
                         m['navy'], thick=0.003, nv=5, round_bottom=0.3)
+            da, dz = 0.05, 0.006
+            P_, N_ = self._path(t, [(a0 + da, zc - 0.002), (a0 + da, zc - 0.045 + dz), (a1 - da, zc - 0.045 + dz),
+                                    (a1 - da, zc - 0.002)], 0.0044)
+            self._stitches(self.name + f'_stiksel_zak{s}', P_, N_)
+            P_, N_ = self._path(t, [(a0 - 0.03 + da, zc + 0.012), (a0 - 0.03 + da, zc + 0.002),
+                                    (a1 + 0.03 - da, zc + 0.002), (a1 + 0.03 - da, zc + 0.012)], 0.0071)
+            self._stitches(self.name + f'_stiksel_klep{s}', P_, N_)
             u = self._u_at_z(t, zc + 0.002)
             pnt, n = self._surf(t, u, (a0 + a1) / 2, 0.0075)
             self._button(self.name + f'_zakknoop{s}', pnt, n, m['silver'], r=0.0042)
@@ -285,6 +344,14 @@ class Daan:
         rb = K.mesh_obj(self.name + '_riemband', np.array(V), F, m['belt'], self.root)
         K.solidify(rb, 0.004, 1.0)
         K.modifier(rb, 'BEVEL', width=0.0015, segments=2, limit_method='ANGLE')
+        for dz in (-0.0095, 0.0095):
+            u2 = float(np.interp(zbelt + dz, hp.C[:, 2], hp.u))
+            P_, N_ = [], []
+            for a in np.linspace(0.35, 2 * math.pi - 0.35, 160):
+                q_, n_ = hp.point(u2, a, 0.0089)
+                P_.append(q_)
+                N_.append(n_)
+            self._stitches(self.name + f'_stiksel_riem{dz > 0}', P_, N_, dash=0.0045, gap=0.003, r=0.0007)
         q, nn = hp.point(uu, 0.0, 0.009)
         z = nrm(nn)
         x = nrm(np.cross([0, 0, 1], z))

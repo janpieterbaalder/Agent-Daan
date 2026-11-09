@@ -109,8 +109,18 @@ def render_setup(w, h, samples=256, transparent=False, exposure=0.0, look='Mediu
     return dev
 
 
+STYLE = os.environ.get('PRENTEN_STIJL', 'papier')
+SKY = None
+
+
 def render(path):
     sc = bpy.context.scene
+    if STYLE == 'wol':
+        from . import wol
+        wol.finalize()
+    elif STYLE == 'vilt':
+        from . import felt
+        felt.finalize()
     sc.render.filepath = path
     bpy.ops.render.render(write_still=True)
 
@@ -722,6 +732,8 @@ def sun_dir(azimuth, elevation, energy=3.0, color=(1.0, 0.94, 0.85), angle=3.0):
 
 def world_sky(zenith='#6fa9e6', horizon='#e9f1f4', ground='#9a9076', strength=1.0, sun_glow=None):
     """Zachte gradiëntlucht als omgevingslicht."""
+    global SKY
+    SKY = (zenith, horizon, ground, strength)
     w = bpy.data.worlds.new('Lucht')
     bpy.context.scene.world = w
     w.use_nodes = True

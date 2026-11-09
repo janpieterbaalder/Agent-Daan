@@ -18,11 +18,14 @@ def _azimuth(D):
     return np.arctan2(D[:, 0], -D[:, 1])
 
 
+_HL = None   # haargrens van het huidige hoofd (head.hair_zs), gezet door build()
+
+
 def hairline(D):
     """Hoogte (z) van de haargrens als functie van de richting rond het hoofd."""
     az = np.abs(np.degrees(_azimuth(D)))
     xs = [0, 30, 55, 75, 95, 115, 140, 180]
-    zs = [0.40, 0.38, 0.30, 0.20, 0.17, -0.05, -0.38, -0.5]
+    zs = _HL or [0.40, 0.38, 0.30, 0.20, 0.17, -0.05, -0.38, -0.5]
     return np.interp(az, xs, zs)
 
 
@@ -60,6 +63,8 @@ def flow(D, P):
 
 def build(head, mats, style='kuif', n_top=60000, n_short=110000, seed=5, cap_line=None, mess=1.0, pony=False):
     """style 'kuif' (zonder pet) of 'pet' (alleen plukjes onder de pet uit). Geeft lijst objecten."""
+    global _HL
+    _HL = getattr(head, 'hair_zs', None)
     rng = np.random.default_rng(seed)
     out = []
     shape = head.shape
@@ -94,7 +99,7 @@ def build(head, mats, style='kuif', n_top=60000, n_short=110000, seed=5, cap_lin
         # onder de pet uit: langere zachte plukjes bij slapen en nek
         near = smoothstep(-0.25, 0.02, Ds[:, 2] - cap_line(Ds))
         temple = np.exp(-((np.abs(Ds[:, 0]) - 0.8) ** 2) / 0.04 - ((Ds[:, 1] + 0.25) ** 2) / 0.12)
-        Ls = 0.03 + (0.06 + 0.07 * temple) * near * (0.6 + 0.4 * rng.random(len(Ds)))
+        Ls = 0.035 + (0.09 + 0.14 * temple) * near * (0.6 + 0.4 * rng.random(len(Ds)))
     k = 5
     t = np.linspace(0, 1, k)[None, :, None]
     lean = (0.12 + 0.12 * rng.random((len(Ds), 1))) * (1 - 0.7 * tw[:, None])
@@ -146,7 +151,7 @@ def _resample(S, lf):
 def _locks(head, D, mats, rng, kind='kuif', mess=1.0):
     """Lokken: gidsen lopen over de haarschil; elke lok is een plat lint van parallelle strengen."""
     shape = head.shape
-    n_guides = 250 if kind == 'kuif' else 40
+    n_guides = 380 if kind == 'kuif' else 40
     # gelijkmatig verdeelde gidswortels (verste-punt-selectie)
     sel = [int(rng.integers(len(D)))]
     dmin = ((D - D[sel[0]]) ** 2).sum(1)
@@ -161,7 +166,7 @@ def _locks(head, D, mats, rng, kind='kuif', mess=1.0):
     if kind == 'kuif':
         front = smoothstep(0.1, -0.75, G[:, 1])
         L = (0.36 + 0.42 * front) * (0.88 + 0.24 * rng.random(n_guides))
-        vol = (0.09 + 0.2 * front) * (0.6 + 0.4 * rng.random(n_guides))
+        vol = (0.1 + 0.24 * front) * (0.6 + 0.4 * rng.random(n_guides))
     else:
         L = 0.1 + 0.06 * rng.random(n_guides)
         vol = np.full(n_guides, 0.01)
@@ -187,8 +192,8 @@ def _locks(head, D, mats, rng, kind='kuif', mess=1.0):
         if kind == 'kuif':
             fz = smoothstep(-0.45, -0.75, u[:, 1]) * smoothstep(0.9, 0.55, u[:, 2])
             curl = smoothstep(0.55, 1.0, tk)
-            up = _norm(np.stack([u[:, 0] * 0.12 + lift_side * 0.15, -0.12 - 0.6 * curl + 0 * u[:, 0],
-                                 1.0 - 0.35 * curl + 0 * u[:, 0]], 1))
+            up = _norm(np.stack([u[:, 0] * 0.14 + lift_side * 0.18, -0.2 - 0.3 * curl + 0 * u[:, 0],
+                                 1.0 - 0.25 * curl + 0 * u[:, 0]], 1))
             nd = _norm(nd * (1 - fz[:, None] * 0.9) + up * fz[:, None] * 0.9)
         dirv = _norm(dirv * 0.5 + nd * 0.5)
         pos = pos + dirv * step
@@ -203,14 +208,14 @@ def _locks(head, D, mats, rng, kind='kuif', mess=1.0):
     T, Sd, U = _frames_along(Gp, Ng)
 
     # strengen per lok
-    per = 300 if kind == 'kuif' else 120
+    per = 240 if kind == 'kuif' else 120
     n = n_guides * per
     gid = np.repeat(np.arange(n_guides), per)
-    width = (0.075 if kind == 'kuif' else 0.035) * (0.8 + 0.4 * rng.random(n_guides))
+    width = (0.1 if kind == 'kuif' else 0.035) * (0.8 + 0.4 * rng.random(n_guides))
     a = rng.normal(0, 1, n) * width[gid] * 0.5
-    b = np.abs(rng.normal(0, 1, n)) * 0.012 - 0.004
+    b = np.abs(rng.normal(0, 1, n)) * (0.022 if kind == 'kuif' else 0.012) - 0.005
     t1 = np.linspace(0, 1, K_)[None, :]
-    taper = 1 - (0.55 + 0.3 * rng.random((n, 1))) * t1 ** 1.1
+    taper = 1 - (0.3 + 0.3 * rng.random((n, 1))) * t1 ** 1.3
     S = Gp[gid] + Sd[gid] * (a[:, None] * taper)[..., None] + U[gid] * (b[:, None] * taper)[..., None]
     # wortel op de hoofdhuid leggen
     r0 = S[:, 0, :]

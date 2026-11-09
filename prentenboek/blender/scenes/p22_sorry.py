@@ -1,36 +1,28 @@
-"""p. 22: 'Sorry,' zeggen ze. 'We hadden zo'n honger.' Van bovenaf, zoals Daan het ziet: de boeven zitten sip
-naast elkaar, maskers omhoog geschoven; de lange houdt de zak omhoog, de dikke wrijft over zijn buik."""
-import math
-import numpy as np
-from lib import core as K, cast, stage, sets, props as P
-from lib.people import Person, people_mats
+"""p. 21: 'Sorry,' zeggen ze. 'We hadden zo'n honger.'
+
+De boeven hebben hun masker omhooggeschoven en kijken beteuterd; de lange houdt de zak voor zich uit om
+terug te geven. Rechts vooraan staat Daan met zijn handen in zijn zij, Joep naast hem. Boven rust voor
+de tekst."""
+from lib import core as K, papierset as PS, papierscene as V
+from lib.papierpop import Daan, Joep, Mens
 
 
 def main(out, opts):
-    Q = stage.setup(opts, 'page')
-    dm = cast.char_mats()
-    pm = people_mats(dm)
-    stage.sky('#4d8fdb', '#cfe6f3', '#8f9a7a', 1.0)
-    stage.sun(200, 50, 3.8)
-    sets.park(None, Q, grass_region=(-1.4, 1.4, -1.0, 1.2), trees=None, bushes=[(-0.9, 1.4, 0.9), (1.1, 1.5, 0.8)],
-              path=False, flowers_n=18, houses=False, grass_density=2600)
-    cam = (0.15, -1.7, 1.35)
-    L = Person('Lange', 'lang', pose=dict(
-        root=(-0.38, 0.12, 0), yaw=8, hip=(0, 0, 0.13), lean=(0.18, 0.04), head=(-14, 6, 10),
-        foot_r=(-0.14, -0.5, 0.075), foot_l=(0.12, -0.52, 0.075), knee_r=(-0.2, -0.3, 1), knee_l=(0.2, -0.3, 1),
-        hand_r=(0.02, -0.5, 0.42), palm_r=(1, 0, 0), fdir_r=(0.2, -0.6, 0.3), fingers_r='grip',
-        hand_l=(0.2, -0.48, 0.42), palm_l=(-1, 0, 0), fdir_l=(-0.2, -0.6, 0.3), fingers_l='grip'),
-        expr=dict(smile=-0.7, brow_tilt=1.0, lids=0.8, look_at=cam), mats=pm, mask_up=0.38, hat=True)
-    L.build()
-    Dk = Person('Dikkie', 'dik', pose=dict(
-        root=(0.42, 0.05, 0), yaw=-10, hip=(0, 0, 0.16), lean=(0.1, -0.05), head=(-12, -8, -10),
-        foot_r=(-0.2, -0.42, 0.075), foot_l=(0.2, -0.44, 0.075), knee_r=(-0.3, -0.3, 1), knee_l=(0.3, -0.3, 1),
-        hand_r=(-0.05, -0.3, 0.55), palm_r=(0, 1, 0), fdir_r=(1, 0, 0.1), fingers_r='flat',
-        hand_l=(0.25, -0.2, 0.4), fingers_l='relaxed'),
-        expr=dict(smile=-0.6, brow_tilt=1.0, lids=0.85, look_at=cam), mats=pm, mask_up=0.38)
-    Dk.build()
-    P.sack('Zak', L.root, (0.1, -0.62, 0.18), (0.35, 0, 0), size=0.36, open_=True, cookies_in=6)
-    K.camera(cam, (0.0, 0.05, 0.55), lens=34, fstop=4.0, focus=(0.0, 0.05, 0.75))
-    K.light('AREA', (0.2, -2.5, 2.2), (0, 0, 0.6), energy=300, size=3.0, color=(0.97, 0.97, 1.0))
-    K.light('AREA', (1.6, 1.6, 2.0), (0, 0, 0.7), energy=200, size=1.0, color=(1.0, 0.9, 0.75))
+    V.setup(opts, 'page')
+    PS.sky(y=0.4, w=120, h=70, sun=None, clouds=((-26, 44, 0.5),))
+    PS.hills(y0=0.33, w=120, seed=13)
+    PS.grassland(y0=-0.5, y1=0.4)
+    PS.bush('Struik', -0.02, 0.18, 54, 11, berries=4, seed=17)
+    Mens('Lange', 'lang', pose=dict(loc=(-0.1, 0.02, 0.0), arm_l='hold', arm_r='hold', head=10),
+         expr=dict(mouth='sad', brows='worried', look=(0.15, -0.2)), mask_up=True).build()
+    PS.sack('Zak', -0.095, 0.004, 0.045, s=1.0, cookies_out=3)
+    Mens('Dikkie', 'dik', pose=dict(loc=(0.01, 0.0, 0.0), arm_l='hug', arm_r='hug', head=-8),
+         expr=dict(mouth='sad', brows='worried', look=(0.15, -0.2)), mask_up=True).build()
+    Daan('Daan', pose=dict(loc=(0.1, -0.1, 0.0), arm_l='hip', arm_r='hip', head=-4),
+         expr=dict(mouth='flat', brows='cross', look=(-0.25, 0.1)), cap=True).build()
+    Joep('Joep', pose=dict(loc=(0.165, -0.12, 0.0), arm_l='hip', arm_r='hip', head=-6),
+         expr=dict(mouth='flat', look=(-0.25, 0.1)), cap=True).build()
+    for i, (x, y) in enumerate(((-0.16, -0.2), (0.05, -0.24))):
+        PS.tuft(f'Pol{i}', x, y, h=3.5, w=6, color='#5f9a3f', seed=i + 7)
+    V.cam((0.03, -0.5, 0.1), (0.03, 0.0, 0.1), lens=40, fstop=7.0, focus=(0.0, -0.04, 0.1))
     K.render(out)
