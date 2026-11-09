@@ -1,0 +1,1565 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agent Daan en Joep</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@600;800&display=swap">
+<style>
+/* Layout: één prentenboekpagina per scherm. Boven een smalle balk, daaronder het 3D-diorama op een ronde 'stip',
+   daaronder de voorleestekst tussen twee grote bladerknoppen, onderaan stippen als paginanummers. */
+:root{
+  --paper:#f3f6fb;
+  --sheet:#ffffff;
+  --ink:#1b2747;
+  --ink-soft:#56627f;
+  --accent:#ffbd17;
+  --accent-ink:#3a2a00;
+  --siren:#2b67dc;
+  --siren-ink:#ffffff;
+  --line:#d8e0ee;
+  --shadow:0 22px 44px -22px rgba(27,39,71,.45);
+  --display:"Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --body:"Andika","Verdana","Trebuchet MS",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0d1426;--sheet:#151e36;--ink:#eef2fb;--ink-soft:#a7b2cc;--accent:#ffc73a;--accent-ink:#2b1f00;
+    --siren:#5f90ff;--siren-ink:#0d1426;--line:#28324f;--shadow:0 22px 44px -22px rgba(0,0,0,.8);color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0d1426;--sheet:#151e36;--ink:#eef2fb;--ink-soft:#a7b2cc;--accent:#ffc73a;--accent-ink:#2b1f00;
+  --siren:#5f90ff;--siren-ink:#0d1426;--line:#28324f;--shadow:0 22px 44px -22px rgba(0,0,0,.8);color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);
+  padding-block:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  overscroll-behavior:none;
+}
+.app{
+  height:100%;max-width:1080px;margin:0 auto;
+  display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;
+  gap:clamp(8px,1.6vh,16px);padding-block:clamp(8px,1.6vh,16px);
+}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.top h1{font-family:var(--display);font-weight:800;font-size:clamp(1.02rem,.9rem + .6vw,1.3rem);line-height:1.05;margin:0}
+.top h1 span{color:var(--siren)}
+.top p{margin:2px 0 0;font-size:.8rem;color:var(--ink-soft)}
+.chip{
+  font-family:var(--display);font-weight:600;font-size:.95rem;line-height:1;
+  border:2px solid var(--line);background:var(--sheet);color:var(--ink);
+  border-radius:999px;padding:8px 14px;min-height:42px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+}
+.chip svg{width:18px;height:18px;flex:none}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.stage-box{min-height:0;min-width:0;display:flex;align-items:center;justify-content:center}
+.stage{
+  position:relative;width:320px;height:240px;max-width:100%;
+  border-radius:clamp(18px,3vw,34px);overflow:hidden;
+  background:linear-gradient(#bfe2ff,#fff6dc);box-shadow:var(--shadow);
+  touch-action:pan-y;cursor:pointer;transition:background .4s ease;
+}
+.stage canvas{display:block;width:100%;height:100%;transition:opacity .2s ease}
+.stage.fade canvas{opacity:0}
+.tap{
+  position:absolute;left:12px;bottom:12px;display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--display);font-weight:600;font-size:clamp(.8rem,.7rem + .4vw,1rem);
+  background:rgba(255,255,255,.88);color:#1b2747;border-radius:999px;padding:6px 12px 6px 8px;
+  pointer-events:none;box-shadow:0 6px 14px -8px rgba(0,0,0,.4);
+  animation:nudge 2.4s ease-in-out infinite;
+}
+.tap svg{width:20px;height:20px}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.nogl{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;font-family:var(--display);color:#1b2747}
+.read{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:clamp(10px,2.4vw,28px)}
+.nav{
+  width:clamp(54px,7vw,70px);height:clamp(54px,7vw,70px);border-radius:50%;border:none;
+  background:var(--siren);color:var(--siren-ink);cursor:pointer;display:grid;place-items:center;
+  box-shadow:0 10px 20px -12px rgba(27,39,71,.6);transition:transform .12s ease,opacity .2s ease;
+}
+.nav:active{transform:scale(.94)}
+.nav:disabled{opacity:.25;cursor:default}
+.nav svg{width:44%;height:44%}
+.text{
+  margin:0;font-size:clamp(1.15rem,.85rem + 1.55vw,2rem);line-height:1.32;
+  text-wrap:balance;min-height:2.64em;transition:opacity .2s ease;
+}
+.text.out{opacity:0}
+.text .klank{font-family:var(--display);font-weight:800;color:var(--siren);letter-spacing:.01em}
+.text .titel{display:block;font-family:var(--display);font-weight:800;font-size:1.5em;line-height:1;letter-spacing:-.01em}
+.text .titel em{font-style:normal;color:var(--siren)}
+.text .sub{display:block;margin-top:.25em;font-size:.8em;color:var(--ink-soft)}
+.text .chip{margin-top:.5em;font-size:1rem}
+.dots{display:flex;justify-content:center;flex-wrap:wrap;gap:9px;padding-bottom:2px}
+.dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink-soft);background:transparent;padding:0;cursor:pointer;transition:transform .2s ease,background .2s ease}
+.dot[aria-current="true"]{background:var(--accent);border-color:var(--accent);transform:scale(1.3)}
+:focus-visible{outline:3px solid var(--siren);outline-offset:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:520px){
+  .top p{display:none}
+  .chip .lbl{display:none}
+  .read{grid-template-columns:1fr 1fr;row-gap:10px}
+  .read .text{grid-column:1 / -1;grid-row:1;min-height:0}
+  .read #prev{grid-row:2;justify-self:start}
+  .read #next{grid-row:2;justify-self:end}
+}
+@media (prefers-reduced-motion: reduce){
+  .stage canvas,.text,.dot,.nav{transition:none}
+  .tap{animation:none}
+}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>Agent Daan <span>&amp;</span> Joep</h1>
+      <p>Een 3D-prentenboek om samen te lezen. Tik op de plaat en kijk wat er gebeurt.</p>
+    </div>
+    <button class="chip" id="sound" type="button" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+      <span class="lbl" id="soundLbl">Geluid aan</span>
+    </button>
+  </header>
+
+  <div class="stage-box" id="stageBox">
+    <div class="stage" id="stage">
+      <canvas id="scene" role="img" aria-label=""></canvas>
+      <div class="tap" id="tap" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M12 10.5V9a1.5 1.5 0 0 1 3 0v2"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.5a6 6 0 0 1-5-2.7L4 15.5a1.6 1.6 0 0 1 2.6-1.8L9 16V11"/></svg>
+        <span id="tapText"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="read">
+    <button class="nav" id="prev" type="button" aria-label="Vorige bladzijde">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4l-8 8 8 8"/></svg>
+    </button>
+    <p class="text" id="text" aria-live="polite"></p>
+    <button class="nav" id="next" type="button" aria-label="Volgende bladzijde">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4l8 8-8 8"/></svg>
+    </button>
+  </div>
+
+  <nav class="dots" id="dots" aria-label="Bladzijden"></nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
+<script>
+(() => {
+'use strict';
+
+/* ================================================================
+   Verhaal
+   ================================================================ */
+const PAGES = [
+  { html:'<span class="titel">Agent Daan <em>&amp;</em> Joep</span><span class="sub">De koekjesboeven</span>',
+    alt:'Daan in politiepak zwaait naast een kleine politieauto. Aapje Joep met een politiepetje zit op de motorkap en salueert.',
+    tap:'Tik op Joep of op de auto', sky:['#a9d8ff','#fff3d6'], build:pCover },
+  { html:'Dit is Daan.<br>En dit is Joep, het aapje van Daan.',
+    alt:'Daan staat in zijn kamer en houdt knuffelaapje Joep vast.',
+    tap:'Tik op Joep', sky:['#ffe9cf','#fff8ee'], build:pMeet },
+  { html:'Daan zet zijn politiepet op.<br>Joep krijgt ook een pet.<br>Nu zijn ze agent!',
+    alt:'De politiepet zakt op het hoofd van Daan. Joep staat op een speelgoedkist en krijgt een klein petje.',
+    tap:'Tik op de petten', sky:['#ffe9cf','#fff8ee'], build:pCaps },
+  { html:'<span class="klank">Nie-nu, nie-nu!</span><br>Daar gaat de politieauto.',
+    alt:'Daan en Joep rijden in de politieauto rondjes over de weg. Het blauwe zwaailicht knippert.',
+    tap:'Tik op de auto', sky:['#9fd3ff','#eaf7ff'], build:pDrive, enter:() => SFX.siren() },
+  { html:'Oh nee! Bij de bakker<br>zijn alle koekjes weg.',
+    alt:'De bakker kijkt verdrietig naar een leeg bord. Daan en Joep schrikken.',
+    tap:'Tik op de bakker', sky:['#ffd9c2','#fff4e6'], build:pBakerySad },
+  { html:'Kijk eens, kruimels!<br>Wie heeft dat gedaan?',
+    alt:'Een spoor van koekkruimels in het gras. Daan kijkt door een vergrootglas, Joep wijst.',
+    tap:'Tik op de kruimels', sky:['#bfe7c9','#f4fbe9'], build:pCrumbs },
+  { html:'Joep klimt in de boom.<br><span class="klank">Hup, hup, hup!</span>',
+    alt:'Joep klimt met zijn lange armen in een hoge boom. Daan kijkt omhoog.',
+    tap:'Tik op Joep', sky:['#b5e0ff','#f2fbff'], build:pClimb },
+  { html:'Joep ziet iets.<br>Daar, achter de struik!',
+    alt:'Joep zit op een tak en wijst naar een struik. Achter de struik gluren twee mutsen.',
+    tap:'Tik op de struik', sky:['#b5e0ff','#f2fbff'], build:pSpot },
+  { html:'Twee boeven met een zak vol koekjes.<br><span class="klank">Smik, smak, smul!</span>',
+    alt:'Twee boeven met gestreepte truien en zwarte maskers eten koekjes uit een grote zak.',
+    tap:'Tik op een boef', sky:['#c8ecd0','#fbfbe9'], build:pRobbers },
+  { html:'<span class="klank">Stop! Politie!</span> roept Daan.<br><span class="klank">Oe-oe-aa-aa!</span> roept Joep.',
+    alt:'Daan steekt zijn hand op. Joep springt. De boeven schrikken en steken hun handen omhoog.',
+    tap:'Tik op Joep', sky:['#c8ecd0','#fbfbe9'], build:pStop },
+  { html:'De boeven schrikken.<br>‘Sorry,’ zeggen ze. ‘We hadden zo’n honger.’',
+    alt:'De boeven zitten op een boomstam en kijken sip. Daan staat met zijn handen in zijn zij, Joep zit op zijn schouder.',
+    tap:'Tik op een boef', sky:['#ffe3c7','#fff8ec'], build:pSorry },
+  { html:'Samen brengen ze de koekjes terug.<br>Iedereen krijgt er één. Joep krijgt er twee!',
+    alt:'Bij de bakker staat een bord vol koekjes. Iedereen heeft een koekje, Joep heeft er twee.',
+    tap:'Tik op Joep', sky:['#ffd9c2','#fff4e6'], build:pShare },
+  { html:'Goed gedaan, agent Daan!<br>Goed gedaan, agent Joep!',
+    alt:'Daan en Joep krijgen een gouden medaille. Er dwarrelt confetti en iedereen klapt.',
+    tap:'Tik voor confetti', sky:['#ffe7a8','#fff8e4'], build:pMedal },
+  { html:'Nu is het bedtijd.<br>Welterusten, agent Daan.<br>Welterusten, Joep.',
+    alt:'Daan slaapt in bed met Joep in zijn arm. De politiepet hangt aan het bed. Buiten schijnt de maan.',
+    tap:'Tik op de maan', sky:['#1a2550','#33407a'], build:pNight, end:true },
+];
+
+/* ================================================================
+   DOM
+   ================================================================ */
+const $ = id => document.getElementById(id);
+const stage = $('stage'), stageBox = $('stageBox'), canvas = $('scene');
+const textEl = $('text'), prevBtn = $('prev'), nextBtn = $('next'), dotsEl = $('dots');
+const tapEl = $('tap'), tapText = $('tapText'), soundBtn = $('sound'), soundLbl = $('soundLbl');
+const reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+PAGES.forEach((p, i) => {
+  const b = document.createElement('button');
+  b.className = 'dot'; b.type = 'button';
+  b.setAttribute('aria-label', i === 0 ? 'Voorkant' : 'Bladzijde ' + i);
+  b.addEventListener('click', () => go(i));
+  dotsEl.appendChild(b);
+});
+
+/* ================================================================
+   Geluid (alles wordt in de browser gemaakt, geen bestanden)
+   ================================================================ */
+let soundOn = true;
+try { soundOn = localStorage.getItem('daan-geluid') !== 'uit'; } catch (e) {}
+let AC = null;
+function ac() {
+  if (!soundOn) return null;
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function tone(f, at, dur, type, vol, f2) {
+  const a = ac(); if (!a) return;
+  const t0 = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+  o.type = type || 'sine';
+  o.frequency.setValueAtTime(f, t0);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol || .12, t0 + .02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + .05);
+}
+const SFX = {
+  siren() { for (let i = 0; i < 4; i++) tone(i % 2 ? 587 : 784, i * .42, .4, 'triangle', .11); },
+  boing() { tone(200, 0, .38, 'sine', .22, 640); },
+  pop()   { tone(700, 0, .09, 'square', .05, 1300); },
+  hup()   { tone(392, 0, .13, 'triangle', .14, 560); },
+  chime() { [784, 988, 1175, 1568].forEach((f, i) => tone(f, i * .09, .55, 'sine', .09)); },
+  monkey(){ [[520, 760], [520, 760], [760, 430], [760, 430]].forEach(([a, b], i) => tone(a, i * .19, .16, 'square', .045, b)); },
+  sad()   { tone(440, 0, .3, 'triangle', .1, 330); tone(330, .28, .4, 'triangle', .1, 247); },
+  tink()  { tone(1568, 0, .25, 'sine', .08); },
+  lullaby(){ [523, 523, 784, 784, 880, 880, 784].forEach((f, i) => tone(f, i * .32, .5, 'sine', .07)); },
+  crunch() {
+    const a = ac(); if (!a) return;
+    const n = Math.floor(a.sampleRate * .2), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2) * (Math.random() < .35 ? 1 : .25);
+    const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    s.buffer = buf; f.type = 'bandpass'; f.frequency.value = 1900; f.Q.value = .8; g.gain.value = .5;
+    s.connect(f); f.connect(g); g.connect(a.destination); s.start();
+  },
+};
+function renderSound() {
+  soundBtn.setAttribute('aria-pressed', String(soundOn));
+  soundLbl.textContent = soundOn ? 'Geluid aan' : 'Geluid uit';
+  soundBtn.setAttribute('aria-label', soundOn ? 'Geluid uitzetten' : 'Geluid aanzetten');
+  $('waves').style.display = soundOn ? '' : 'none';
+}
+soundBtn.addEventListener('click', () => {
+  soundOn = !soundOn;
+  try { localStorage.setItem('daan-geluid', soundOn ? 'aan' : 'uit'); } catch (e) {}
+  renderSound(); if (soundOn) SFX.pop();
+});
+renderSound();
+
+/* ================================================================
+   Three.js basis
+   ================================================================ */
+const T = window.THREE;
+let renderer = null;
+if (T) {
+  try {
+    T.ColorManagement.legacyMode = false;
+    renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  } catch (e) { renderer = null; }
+}
+if (!renderer) {
+  const d = document.createElement('div'); d.className = 'nogl';
+  d.textContent = 'Dit apparaat kan de 3D-platen niet laten zien. De tekst kun je wel voorlezen.';
+  stage.appendChild(d); canvas.style.display = 'none';
+}
+
+let ENV = null, camera = null;
+if (renderer) {
+  renderer.outputEncoding = T.sRGBEncoding;
+  renderer.toneMapping = T.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = .9;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = T.PCFSoftShadowMap;
+  renderer.setClearColor(0x000000, 0);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const pmrem = new T.PMREMGenerator(renderer);
+  ENV = pmrem.fromScene(new T.RoomEnvironment(), 0.04).texture;
+  camera = new T.PerspectiveCamera(30, 4 / 3, 0.1, 120);
+}
+
+/* ---------- materialen ---------- */
+const MAT = {};
+const own = [];  // per scène aangemaakt, wordt opgeruimd
+function P(color, o) { return new T.MeshPhysicalMaterial(Object.assign({ color, roughness: .6, metalness: 0, envMapIntensity: .35 }, o || {})); }
+function C(h) { return new T.Color(h); }
+function makeMaterials() {
+  Object.assign(MAT, {
+    skin:     P(0xf2b48f, { roughness: .5, sheen: .35, sheenColor: C(0xffd7c2), sheenRoughness: .5 }),
+    skinDeep: P(0xe99a7a, { roughness: .5 }),
+    lips:     P(0xa2413f, { roughness: .45 }),
+    mouthIn:  P(0x6d2024, { roughness: .6 }),
+    tongue:   P(0xe56f78, { roughness: .5 }),
+    blush:    new T.MeshStandardMaterial({ color: 0xff6f6f, transparent: true, opacity: .38, roughness: .9, depthWrite: false }),
+    eyeWhite: P(0xffffff, { roughness: .12, clearcoat: 1, clearcoatRoughness: .05 }),
+    iris:     P(0x4c93da, { roughness: .2, clearcoat: 1, clearcoatRoughness: .05 }),
+    pupil:    P(0x0d1018, { roughness: .1, clearcoat: 1 }),
+    shine:    new T.MeshBasicMaterial({ color: 0xffffff }),
+    hair:     P(0xe8c46c, { roughness: .5, sheen: .8, sheenColor: C(0xfff0bc), sheenRoughness: .35 }),
+    hairLite: P(0xf4d88e, { roughness: .45, sheen: .8, sheenColor: C(0xfff6d6), sheenRoughness: .3 }),
+    fuzz:     P(0xcfa458, { roughness: .95, sheen: .8, sheenColor: C(0xf6dc9c), sheenRoughness: .5 }),
+    brow:     P(0xc99a4e, { roughness: .6 }),
+    navy:     P(0x1f3166, { roughness: .8, sheen: .5, sheenColor: C(0x5d78bf), sheenRoughness: .5 }),
+    navyDark: P(0x16234a, { roughness: .7 }),
+    gold:     P(0xffc23a, { roughness: .25, metalness: .9, envMapIntensity: 1.3 }),
+    black:    P(0x17191f, { roughness: .55 }),
+    mask:     P(0x16171c, { roughness: .5, side: T.DoubleSide }),
+    gloss:    P(0x111216, { roughness: .15, clearcoat: 1, clearcoatRoughness: .08 }),
+    white:    P(0xffffff, { roughness: .5 }),
+    cream:    P(0xfff4e2, { roughness: .6 }),
+    plush:    P(0x8e4b1f, { roughness: 1, sheen: .7, sheenColor: C(0xd9945c), sheenRoughness: .6 }),
+    plushDk:  P(0x6c3714, { roughness: 1, sheen: .7, sheenColor: C(0xb67a4c), sheenRoughness: .6 }),
+    plushFace:P(0xf0d3a4, { roughness: 1, sheen: .6, sheenColor: C(0xfff6e4), sheenRoughness: .6 }),
+    thread:   P(0x141414, { roughness: .9 }),
+    grass:    P(0x6fbf4f, { roughness: .95, sheen: .25, sheenColor: C(0xc6f29a) }),
+    soil:     P(0x9a7452, { roughness: 1 }),
+    trunk:    P(0x8e5c3b, { roughness: .85 }),
+    trunkEnd: P(0xd9b285, { roughness: .8 }),
+    leaf:     P(0x4fa83d, { roughness: .85, sheen: .35, sheenColor: C(0xb6f08e) }),
+    leaf2:    P(0x3d8a36, { roughness: .85, sheen: .35, sheenColor: C(0xa6e486) }),
+    cookie:   P(0xd9a159, { roughness: .85 }),
+    choc:     P(0x4b2a17, { roughness: .55 }),
+    road:     P(0x5b6172, { roughness: .9 }),
+    carWhite: P(0xf7f9fd, { roughness: .25, clearcoat: 1, clearcoatRoughness: .1, envMapIntensity: .9 }),
+    carBlue:  P(0x2b67dc, { roughness: .3, clearcoat: 1, clearcoatRoughness: .1, envMapIntensity: .9 }),
+    glass:    P(0xd5ecff, { roughness: .05, transparent: true, opacity: .32, envMapIntensity: 1.2 }),
+    rubber:   P(0x1d1e23, { roughness: .85 }),
+    chrome:   P(0xe2e6ee, { roughness: .2, metalness: 1, envMapIntensity: 1.2 }),
+    wood:     P(0xcf9f6c, { roughness: .7 }),
+    woodDark: P(0x9a6942, { roughness: .7 }),
+    burlap:   P(0xbb8f59, { roughness: 1, sheen: .6, sheenColor: C(0xecc993) }),
+    wall:     P(0xf8dcc8, { roughness: .9 }),
+    roof:     P(0xcc5a4b, { roughness: .7 }),
+    grey:     P(0x676c7c, { roughness: .8 }),
+    red:      P(0xe0483e, { roughness: .6, sheen: .6, sheenColor: C(0xffa49b) }),
+    apron:    P(0xa9cdee, { roughness: .8, sheen: .5, sheenColor: C(0xe6f3ff) }),
+    pillow:   P(0xffffff, { roughness: .9, sheen: .7, sheenColor: C(0xe8efff) }),
+    blanket:  P(0x7aa4ea, { roughness: .9, sheen: 1, sheenColor: C(0xd2e2ff), sheenRoughness: .5 }),
+    toybox:   P(0xf0613f, { roughness: .5, clearcoat: .6 }),
+    cloud:    P(0xffffff, { roughness: 1, emissive: C(0xffffff), emissiveIntensity: .18 }),
+    head:     new T.MeshStandardMaterial({ color: 0xfff1b3, emissive: C(0xffe08a), emissiveIntensity: .8 }),
+    moon:     new T.MeshStandardMaterial({ color: 0xfff3c2, emissive: C(0xffe9a8), emissiveIntensity: 1.4 }),
+    lamp:     new T.MeshStandardMaterial({ color: 0xffe6b0, emissive: C(0xffc970), emissiveIntensity: 1.6 }),
+    nightSky: new T.MeshStandardMaterial({ color: 0x1b2758, emissive: C(0x16214d), emissiveIntensity: .8 }),
+    daySky:   new T.MeshStandardMaterial({ color: 0xbfe4ff, emissive: C(0xa8d8ff), emissiveIntensity: .6 }),
+  });
+}
+if (renderer) makeMaterials();
+
+function canvasTex(w, h, draw, rep) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding;
+  t.wrapS = t.wrapT = T.RepeatWrapping; if (rep) t.repeat.set(rep[0], rep[1]);
+  t.anisotropy = 4;
+  return t;
+}
+function stripeMat() {
+  const t = canvasTex(8, 64, (x, w, h) => { for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? '#f3f3f1' : '#1d1f27'; x.fillRect(0, i * 8, w, 8); } });
+  const m = P(0xffffff, { map: t, roughness: .8, sheen: .5, sheenColor: C(0xffffff) });
+  own.push(m, t); return m;
+}
+
+/* ---------- geometrie-hulpjes ---------- */
+function M(geo, mat) { const m = new T.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; return m; }
+function Sph(r, mat, seg) { seg = seg || 32; return M(new T.SphereGeometry(r, seg, Math.max(12, Math.round(seg * .75))), mat); }
+function Cap(r, len, mat) { return M(new T.CapsuleGeometry(r, len, 8, 18), mat); }
+function Cyl(rt, rb, h, mat, seg) { return M(new T.CylinderGeometry(rt, rb, h, seg || 32), mat); }
+function Box(w, h, d, mat, r) { return M(r ? new T.RoundedBoxGeometry(w, h, d, 4, r) : new T.BoxGeometry(w, h, d), mat); }
+function G(parent) { const g = new T.Group(); if (parent) parent.add(g); return g; }
+function put(o, x, y, z, parent) { o.position.set(x || 0, y || 0, z || 0); if (parent) parent.add(o); return o; }
+function arc(radius, tube, frac, mat, center) {
+  const a = Math.PI * 2 * frac;
+  const m = M(new T.TorusGeometry(radius, tube, 8, 28, a), mat);
+  m.rotation.z = (center === undefined ? -Math.PI / 2 : center) - a / 2;
+  return m;
+}
+function faceFrom(o, cx, cy, cz) { const p = o.position; o.lookAt(p.x * 2 - cx, p.y * 2 - cy, p.z * 2 - cz); }
+function starGeo(r, depth) {
+  const s = new T.Shape();
+  for (let i = 0; i < 10; i++) {
+    const a = i / 10 * Math.PI * 2 + Math.PI / 2, rr = i % 2 ? r * .45 : r;
+    i ? s.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : s.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  const g = new T.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: depth * .4, bevelSize: r * .08, bevelSegments: 2 });
+  g.center(); return g;
+}
+const DOWN = new T.Vector3(0, -1, 0);
+function v3(x, y, z) { return new T.Vector3(x, y, z); }
+function aim(obj, x, y, z) { obj.quaternion.setFromUnitVectors(DOWN, v3(x, y, z).normalize()); }
+
+/* ================================================================
+   Personage: Daan
+   ================================================================ */
+function makeCap() {
+  const c = G();
+  put(Cyl(.41, .405, .085, MAT.black, 48), 0, .04, 0, c);
+  put(Cyl(.48, .41, .15, MAT.navy, 48), 0, .155, 0, c);
+  const lid = put(Sph(.48, MAT.navy, 48), 0, .228, 0, c); lid.scale.y = .1;
+  const visor = put(M(new T.CylinderGeometry(.45, .45, .028, 48, 1, false, -1.1, 2.2), MAT.gloss), 0, .01, .07, c);
+  visor.rotation.x = .32;
+  const st = put(M(starGeo(.07, .02), MAT.gold), 0, .15, .445, c);
+  st.rotation.x = -.45;
+  return c;
+}
+
+function makeDaan(opt) {
+  opt = opt || {};
+  const pj = opt.outfit === 'pj';
+  const SUIT = pj ? P(0x9cc4f2, { roughness: .9, sheen: 1, sheenColor: C(0xe4f0ff), sheenRoughness: .5 }) : MAT.navy;
+  const CUFF = pj ? P(0xffd863, { roughness: .8 }) : MAT.navyDark;
+  if (pj) own.push(SUIT, CUFF);
+  const kit = [];
+  const R = { pose: { headX: 0, headY: 0, headZ: 0, upperX: 0, upperZ: 0 } };
+  const root = G(); root.name = 'Daan';
+  const body = G(root);
+  const legs = {};
+  [['R', -1], ['L', 1]].forEach(([k, s]) => {
+    const hip = put(G(), .13 * s, .52, 0, body);
+    put(Cap(.115, .2, SUIT), 0, -.2, 0, hip);
+    const b = put(Sph(.13, MAT.gloss), 0, -.43, .045, hip); b.scale.set(.95, .62, 1.32);
+    legs[k] = hip;
+  });
+  const upper = put(G(), 0, .52, 0, body);
+  const U = (o, x, y, z) => put(o, x, y - .52, z, upper);
+
+  const prof = [[0, .47], [.2, .47], [.29, .53], [.335, .66], [.335, .8], [.31, .94], [.26, 1.05], [.16, 1.13], [0, 1.15]]
+    .map(p => new T.Vector2(p[0], p[1]));
+  const torso = M(new T.LatheGeometry(prof, 44), SUIT); torso.scale.z = .84; torso.position.y = -.52; upper.add(torso);
+  const belt = U(M(new T.TorusGeometry(.322, .036, 10, 48), MAT.black), 0, .575, 0); belt.rotation.x = Math.PI / 2; belt.scale.y = .84;
+  kit.push(belt, U(Box(.12, .08, .035, MAT.gold, .012), 0, .575, .275));
+  [[.72, .282], [.85, .276], [.98, .246]].forEach(([y, z]) => kit.push(U(Sph(.022, MAT.gold, 12), 0, y, z)));
+  const badge = U(M(starGeo(.08, .025), MAT.gold), .145, .93, .235); badge.rotation.y = .5; kit.push(badge);
+  const ring = U(M(new T.TorusGeometry(.13, .035, 10, 28), CUFF), 0, 1.11, 0); ring.rotation.x = Math.PI / 2;
+  U(Cyl(.105, .115, .14, MAT.skin, 20), 0, 1.15, 0);
+  const walkie = U(Box(.075, .13, .05, MAT.black, .015), -.29, .64, .12); walkie.rotation.y = -.7;
+  kit.push(walkie, U(Cyl(.008, .008, .1, MAT.black, 6), -.3, .75, .13));
+  if (pj) kit.forEach(k => { k.visible = false; });
+
+  const arms = {};
+  [['R', -1], ['L', 1]].forEach(([k, s]) => {
+    const sh = U(G(), .29 * s, 1.0, 0);
+    put(Sph(.1, SUIT), 0, 0, 0, sh);
+    put(Cap(.086, .08, SUIT), 0, -.11, 0, sh);
+    const el = put(G(), 0, -.22, 0, sh);
+    put(Sph(.083, SUIT), 0, 0, 0, el);
+    put(Cap(.08, .05, SUIT), 0, -.08, 0, el);
+    put(Cyl(.084, .084, .045, CUFF, 20), 0, -.15, 0, el);
+    const hand = put(Sph(.086, MAT.skin), 0, -.215, 0, el); hand.scale.set(1, 1.05, .9);
+    sh.rotation.z = .16 * s;
+    arms[k] = { sh, el, hand };
+  });
+
+  // hoofd
+  const head = U(G(), 0, 1.56, .02);
+  const RR = .46;
+  const skull = put(Sph(RR, MAT.skin, 56), 0, 0, 0, head); skull.scale.set(1, .97, .96);
+  [-1, 1].forEach(s => {
+    put(Sph(.16, MAT.skin, 32), .2 * s, -.14, .29, head);
+    const b = put(Sph(.1, MAT.blush, 24), .252 * s, -.125, .435, head); b.scale.set(1, .72, .22); faceFrom(b, .2 * s, -.14, .29);
+    const ear = put(Sph(.105, MAT.skin, 24), .445 * s, -.03, 0, head); ear.scale.set(.45, 1, .75); ear.rotation.y = -.35 * s;
+    const inner = put(Sph(.06, MAT.skinDeep, 16), .47 * s, -.03, .02, head); inner.scale.set(.32, .78, .6); inner.rotation.y = -.35 * s;
+  });
+  const eyes = [], lids = [];
+  [-1, 1].forEach(s => {
+    const e = put(G(), .158 * s, -.015, .39, head);
+    const w = put(Sph(.088, MAT.eyeWhite, 28), 0, 0, 0, e); w.scale.set(1, 1.08, .6);
+    const ir = put(Sph(.062, MAT.iris, 24), 0, -.004, .03, e); ir.scale.set(1, 1.05, .5);
+    const pu = put(Sph(.034, MAT.pupil, 18), 0, -.004, .052, e); pu.scale.set(1, 1.05, .4);
+    put(Sph(.018, MAT.shine, 10), .026, .03, .066, e);
+    put(Sph(.008, MAT.shine, 8), -.02, -.025, .066, e);
+    e.rotation.y = .26 * s;
+    eyes.push(e);
+    const lid = put(arc(.062, .012, .3, MAT.brow, -Math.PI / 2), .158 * s, -.03, .43, head);
+    lid.visible = false; lids.push(lid);
+    const brow = put(arc(.07, .013, .17, MAT.brow, Math.PI / 2), .162 * s, .1, .405, head);
+    brow.rotation.y = .25 * s;
+  });
+  const nose = put(Sph(.048, MAT.skinDeep, 20), 0, -.085, .433, head); nose.scale.set(1.15, .9, .8);
+  const mouth = put(G(), 0, -.205, .404, head);
+  const smile = put(arc(.075, .013, .36, MAT.lips), 0, 0, 0, mouth);
+  const grin = G(mouth);
+  put(M(new T.CircleGeometry(.082, 28, Math.PI, Math.PI), MAT.mouthIn), 0, .008, .002, grin);
+  put(arc(.082, .011, .5, MAT.lips), 0, .008, .004, grin);
+  const tg = put(Sph(.035, MAT.tongue, 16), 0, -.045, -.004, grin); tg.scale.set(1.3, .7, .5);
+  const oh = put(Sph(.046, MAT.mouthIn, 18), 0, -.01, 0, mouth); oh.scale.set(.85, 1.1, .35);
+
+  // haar: kort opgeschoren zijkanten, langer bovenop, naar voren en iets omhoog
+  const hair = G(head);
+  const fz = M(new T.SphereGeometry(RR * 1.03, 56, 28, Math.PI / 2 + 1.05, Math.PI * 2 - 2.1, 0, Math.PI * .6), MAT.fuzz);
+  fz.scale.set(1, .97, .97); hair.add(fz);
+  const top = M(new T.SphereGeometry(RR * 1.06, 64, 32, 0, Math.PI * 2, 0, Math.PI * .34), MAT.hair);
+  top.position.set(0, .015, -.005); top.scale.set(1.0, .98, 1.0); hair.add(top);
+  const crown = [], capFringe = [];
+  const tuft = (() => {
+    const pts = [[0, 0], [.05, .015], [.066, .065], [.054, .13], [.03, .19], [0, .235]].map(q => new T.Vector2(q[0], q[1]));
+    const g = new T.LatheGeometry(pts, 14); g.scale(1, 1, .62); return g;
+  })();
+  const Rh = RR * 1.06 * .98, UP = v3(0, 1, 0);
+  const addTuft = (th, ph, fwd, upw, len, list, mat) => {
+    const n = v3(Math.sin(th) * Math.sin(ph), Math.cos(th), Math.sin(th) * Math.cos(ph));
+    const t = put(M(tuft, mat), n.x * Rh * .9, n.y * Rh * .9 + .015, n.z * Rh * .9, hair);
+    const d = n.clone().multiplyScalar(.18).add(v3(Math.sin(ph) * .3, upw, fwd)).normalize();
+    t.quaternion.setFromUnitVectors(UP, d); t.scale.set(1.15, len, 1.15);
+    list.push(t); return t;
+  };
+  // kuif: zachte lobben die naar voren en iets omhoog golven
+  [[-.18, .355, .25, -.5, .18], [0, .395, .27, -.58, 0], [.18, .355, .25, -.5, -.18], [-.1, .44, .07, -.3, .1], [.1, .44, .07, -.3, -.1], [0, .46, -.12, -.15, 0]].forEach(([x, y, z, rx, rz], i) => {
+    const l = put(Sph(.155, i % 2 ? MAT.hairLite : MAT.hair, 36), x, y, z, hair);
+    l.scale.set(1, .46, 1.3); l.rotation.set(rx, x * .7, rz);
+    crown.push(l);
+  });
+  // pony: dunne puntjes over het voorhoofd
+  for (let i = 0; i < 7; i++) {
+    const ph = -.78 + i * (1.56 / 6);
+    const t = addTuft(.3 * Math.PI + (i % 2) * .03, ph, 1, .18 + (i % 3) * .14, .62 + (i % 2) * .16, crown, i % 2 ? MAT.hairLite : MAT.hair);
+    t.scale.x = t.scale.z = .8;
+  }
+  // onder de pet: een paar plukjes pony
+  for (let i = 0; i < 5; i++) addTuft(.355 * Math.PI, -.44 + i * .22, 1, -.35, .5, capFringe, i % 2 ? MAT.hairLite : MAT.hair);
+  const wisp = new T.ConeGeometry(.01, .16, 6); wisp.translate(0, .08, 0);
+  [[-.04, -.1, -.3, .1], [.0, -.08, .1, .25], [.05, -.13, .35, -.1], [-.02, -.17, -.15, -.2]].forEach(([x, z, dx, dz]) => {
+    const w = put(M(wisp, MAT.hairLite), x, .47, z, hair);
+    w.quaternion.setFromUnitVectors(UP, v3(dx, 1, dz).normalize());
+    crown.push(w);
+  });
+
+  const cap = makeCap(); put(cap, 0, .26, -.02, head); cap.rotation.x = -.12;
+
+  R.root = root; R.body = body; R.upper = upper; R.head = head; R.arms = arms; R.legs = legs; R.cap = cap;
+  R.setCap = on => { cap.visible = on; crown.forEach(c => { c.visible = !on; }); capFringe.forEach(c => { c.visible = on; }); };
+  R.setExpr = x => {
+    smile.visible = x === 'smile'; grin.visible = x === 'grin'; oh.visible = x === 'oh' || x === 'shout';
+    oh.scale.set(x === 'shout' ? 1.2 : .85, x === 'shout' ? 1.35 : 1.1, .35);
+    const sleep = x === 'sleep';
+    eyes.forEach(e => { e.visible = !sleep; }); lids.forEach(l => { l.visible = sleep; });
+    if (sleep) smile.visible = true;
+    R.sleeping = sleep;
+  };
+  R.setCap(!!opt.cap); R.setExpr(opt.expr || 'smile');
+  let nextBlink = 1 + Math.random() * 2, blinkT = -1;
+  R.idle = (t, dt) => {
+    const a = reduceMotion ? 0 : 1;
+    body.position.y = Math.sin(t * 2.3) * .012 * a;
+    upper.rotation.x = R.pose.upperX + Math.sin(t * 2.3 + .5) * .01 * a;
+    upper.rotation.z = R.pose.upperZ + Math.sin(t * 1.1) * .018 * a;
+    head.rotation.set(R.pose.headX + Math.sin(t * .9) * .025 * a, R.pose.headY + Math.sin(t * .6) * .07 * a, R.pose.headZ + Math.sin(t * 1.3) * .03 * a);
+    if (R.sleeping) return;
+    nextBlink -= dt;
+    if (nextBlink < 0) { blinkT = 0; nextBlink = 2.5 + Math.random() * 3; }
+    if (blinkT >= 0) { blinkT += dt; const k = blinkT < .14 ? 1 - Math.sin(blinkT / .14 * Math.PI) * .92 : 1; eyes.forEach(e => { e.scale.y = k; }); if (blinkT > .14) blinkT = -1; }
+  };
+  return R;
+}
+
+/* ================================================================
+   Personage: Joep (knuffelaapje)
+   ================================================================ */
+function makeJoep(opt) {
+  opt = opt || {};
+  const R = { pose: { headX: 0, headY: 0, headZ: 0 } };
+  const root = G(); root.name = 'Joep';
+  const body = G(root);
+  const torso = put(Sph(.13, MAT.plush, 32), 0, .32, 0, body); torso.scale.set(1, 1.2, .86);
+  const legs = {}, arms = {};
+  [['R', -1], ['L', 1]].forEach(([k, s]) => {
+    const hip = put(G(), .058 * s, .2, 0, body);
+    put(Cap(.042, .12, MAT.plush), 0, -.1, 0, hip);
+    const f = put(Sph(.05, MAT.plush, 18), 0, -.165, .012, hip); f.scale.set(1, .75, 1.15);
+    legs[k] = hip;
+    const sh = put(G(), .1 * s, .42, 0, body);
+    put(Cap(.036, .2, MAT.plush), 0, -.13, 0, sh);
+    put(Sph(.042, MAT.plush, 16), 0, -.25, 0, sh);
+    sh.rotation.z = .45 * s;
+    arms[k] = sh;
+  });
+  const tail = put(G(), 0, .22, -.09, body);
+  const tm = put(Cap(.032, .12, MAT.plushDk), 0, -.08, 0, tail); tm.scale.z = .32;
+  tail.rotation.x = 1.0;
+
+  const head = put(G(), 0, .6, 0, body);
+  put(Sph(.17, MAT.plush, 40), 0, 0, 0, head);
+  const mz = put(Sph(.12, MAT.plushFace, 32), 0, -.03, .095, head); mz.scale.set(1.18, .95, .62);
+  [-1, 1].forEach(s => {
+    const l = put(Sph(.072, MAT.plushFace, 24), .058 * s, .045, .112, head); l.scale.set(1, 1.1, .55);
+    const e = put(Sph(.019, MAT.thread, 14), .056 * s, .045, .149, head); e.scale.set(1, 1.1, .6);
+    const ear = put(Sph(.058, MAT.plush, 24), .168 * s, .015, -.005, head); ear.scale.set(.42, 1, .88); ear.rotation.y = .35 * s;
+  });
+  const tri = new T.Shape(); tri.moveTo(-.022, .012); tri.lineTo(.022, .012); tri.lineTo(0, -.017); tri.closePath();
+  put(M(new T.ExtrudeGeometry(tri, { depth: .01, bevelEnabled: false }), MAT.thread), 0, -.004, .16, head);
+  const sm = put(arc(.038, .0055, .34, MAT.thread), 0, -.038, .163, head); sm.rotation.x = -.12;
+  const cap = makeCap(); cap.scale.setScalar(.35); put(cap, 0, .1, -.01, head); cap.rotation.set(-.15, 0, .12);
+
+  R.root = root; R.body = body; R.head = head; R.arms = arms; R.legs = legs; R.tail = tail; R.cap = cap;
+  R.setCap = on => { cap.visible = on; };
+  R.setCap(!!opt.cap);
+  R.sit = () => { legs.R.rotation.x = legs.L.rotation.x = -1.45; legs.R.rotation.z = -.15; legs.L.rotation.z = .15; };
+  R.idle = (t) => {
+    const a = reduceMotion ? 0 : 1;
+    head.rotation.set(R.pose.headX + Math.sin(t * 1.7) * .04 * a, R.pose.headY + Math.sin(t * .8) * .1 * a, R.pose.headZ + Math.sin(t * 1.4) * .07 * a);
+    tail.rotation.z = Math.sin(t * 2.5) * .25 * a;
+  };
+  return R;
+}
+
+/* ================================================================
+   Bijfiguren: de bakker en de boeven
+   ================================================================ */
+function simpleFace(head, r, o) {
+  // ogen, wangen, neus, mond voor bijfiguren; geeft setExpr terug
+  o = o || {};
+  const eyes = [];
+  [-1, 1].forEach(s => {
+    const e = put(G(), (o.eyeX || .11) * s, o.eyeY || .07, r * .93, head);
+    if (o.whites) { const w = put(Sph(.068, MAT.eyeWhite, 20), 0, 0, 0, e); w.scale.set(1, 1.1, .55); }
+    put(Sph(o.pupil || .036, MAT.pupil, 16), 0, 0, o.whites ? .03 : 0, e).scale.z = .6;
+    put(Sph(.011, MAT.shine, 8), .012, .014, o.whites ? .052 : .025, e);
+    eyes.push(e);
+    if (o.blush) { const b = put(Sph(.07, MAT.blush, 16), .19 * s, -.07, r * .9, head); b.scale.set(1, .7, .25); faceFrom(b, 0, 0, 0); }
+  });
+  const mouth = put(G(), 0, o.mouthY || -.15, r * .92, head);
+  const smile = put(arc(.07, .013, .34, MAT.lips), 0, 0, 0, mouth);
+  const sad = put(arc(.055, .012, .3, MAT.lips, Math.PI / 2), 0, -.03, 0, mouth);
+  const oh = put(Sph(.045, MAT.mouthIn, 16), 0, -.01, 0, mouth); oh.scale.set(.9, 1.15, .4);
+  const chew = put(Sph(.05, MAT.mouthIn, 16), 0, -.01, 0, mouth); chew.scale.set(1.2, .5, .4);
+  const set = x => { smile.visible = x === 'smile'; sad.visible = x === 'sad'; oh.visible = x === 'oh'; chew.visible = x === 'chew'; };
+  set('smile');
+  let nb = Math.random() * 3, bt = -1;
+  const blink = (dt) => {
+    nb -= dt; if (nb < 0) { bt = 0; nb = 2.5 + Math.random() * 3; }
+    if (bt >= 0) { bt += dt; const k = bt < .14 ? 1 - Math.sin(bt / .14 * Math.PI) * .9 : 1; eyes.forEach(e => { e.scale.y = k; }); if (bt > .14) bt = -1; }
+  };
+  return { set, blink };
+}
+
+function makeBaker() {
+  const R = {}; const root = G(); const body = G(root);
+  [-1, 1].forEach(s => {
+    const hip = put(G(), .17 * s, .58, 0, body);
+    put(Cap(.12, .3, MAT.grey), 0, -.27, 0, hip);
+    const sh = put(Sph(.14, MAT.gloss), 0, -.54, .05, hip); sh.scale.set(1, .6, 1.35);
+  });
+  const t = put(Sph(.53, MAT.white, 44), 0, 1.12, 0, body); t.scale.set(1, 1.12, .9);
+  const ap = put(M(new T.SphereGeometry(.545, 40, 30, Math.PI / 2 - .85, 1.7, Math.PI * .38, Math.PI * .5), MAT.apron), 0, 1.12, 0, body); ap.scale.set(1, 1.12, .9);
+  [1.42, 1.26].forEach(y => put(Sph(.03, MAT.gold, 12), 0, y, .47, body));
+  const arms = {};
+  [['R', -1], ['L', 1]].forEach(([k, s]) => {
+    const sh = put(G(), .47 * s, 1.45, 0, body);
+    put(Sph(.13, MAT.white), 0, 0, 0, sh);
+    put(Cap(.11, .38, MAT.white), 0, -.27, 0, sh);
+    put(Sph(.1, MAT.skin), 0, -.55, 0, sh);
+    sh.rotation.z = .3 * s; arms[k] = sh;
+  });
+  const head = put(G(), 0, 2.06, 0, body);
+  put(Sph(.36, MAT.skin, 44), 0, 0, 0, head);
+  [-1, 1].forEach(s => { const e = put(Sph(.07, MAT.skin), .35 * s, 0, 0, head); e.scale.set(.5, 1, .8); });
+  const face = simpleFace(head, .36, { eyeX: .12, eyeY: .08, blush: true, mouthY: -.19 });
+  const nose = put(Sph(.085, MAT.skinDeep, 24), 0, -.03, .35, head); nose.scale.set(1.1, .95, .9);
+  [-1, 1].forEach(s => {
+    const m = put(Cap(.045, .13, P(0x6b4127, { roughness: .8 })), .1 * s, -.12, .33, head);
+    m.rotation.z = 1.25 * s; m.rotation.y = -.3 * s;
+    own.push(m.material);
+    put(arc(.05, .012, .17, MAT.choc, Math.PI / 2), .13 * s, .17, .32, head);
+  });
+  put(Cyl(.3, .29, .24, MAT.white, 36), 0, .4, -.01, head);
+  [[0, .66, 0, .2], [.15, .6, .06, .16], [-.15, .6, .06, .16], [.1, .6, -.13, .16], [-.1, .6, -.13, .16]].forEach(([x, y, z, r]) => put(Sph(r, MAT.white, 24), x, y, z, head));
+  R.root = root; R.body = body; R.head = head; R.arms = arms; R.face = face;
+  R.idle = (t, dt) => { if (!reduceMotion) body.position.y = Math.sin(t * 2) * .01; face.blink(dt); };
+  return R;
+}
+
+function makeBoef(opt) {
+  opt = opt || {};
+  const tall = opt.tall !== false;
+  const R = {}; const root = G(); const body = G(root);
+  const stripe = stripeMat();
+  const hipY = tall ? .62 : .42, headY = tall ? 1.98 : 1.5, shY = tall ? 1.46 : 1.12, shX = tall ? .36 : .44;
+  const legs = {};
+  [['R', -1], ['L', 1]].forEach(([k, s]) => {
+    const hip = put(G(), (tall ? .13 : .16) * s, hipY, 0, body);
+    put(Cap(.1, tall ? .36 : .16, MAT.black), 0, tall ? -.3 : -.2, 0, hip);
+    const sh = put(Sph(.13, MAT.gloss), 0, tall ? -.57 : -.37, .05, hip); sh.scale.set(1, .6, 1.35);
+    legs[k] = hip;
+  });
+  if (tall) { const t = put(Cap(.34, .55, stripe), 0, 1.12, 0, body); t.scale.z = .85; }
+  else { const t = put(Sph(.5, stripe, 44), 0, .86, 0, body); t.scale.set(1, .92, .88); }
+  const arms = {};
+  [['R', -1], ['L', 1]].forEach(([k, s]) => {
+    const sh = put(G(), shX * s, shY, 0, body);
+    put(Sph(.1, stripe, 20), 0, 0, 0, sh);
+    put(Cap(.09, .1, stripe), 0, -.12, 0, sh);
+    const el = put(G(), 0, -.25, 0, sh);
+    put(Cap(.085, .06, stripe), 0, -.09, 0, el);
+    const hand = put(Sph(.09, MAT.skin, 20), 0, -.22, 0, el);
+    sh.rotation.z = .2 * s;
+    arms[k] = { sh, el, hand };
+  });
+  const head = put(G(), 0, headY, 0, body);
+  put(Sph(.3, MAT.skin, 40), 0, 0, 0, head);
+  [-1, 1].forEach(s => { const e = put(Sph(.065, MAT.skin), .29 * s, -.02, 0, head); e.scale.set(.5, 1, .8); });
+  put(M(new T.CylinderGeometry(.312, .312, .13, 44, 1, true), MAT.mask), 0, .07, 0, head);
+  const face = simpleFace(head, .3, { eyeX: .105, eyeY: .07, whites: true, pupil: .03, mouthY: -.15 });
+  const nose = put(Sph(.08, MAT.skinDeep, 22), 0, -.035, .3, head); nose.scale.set(1.1, .95, .9);
+  const hat = opt.hat || MAT.black;
+  put(M(new T.SphereGeometry(.316, 40, 16, 0, Math.PI * 2, 0, Math.PI * .42), hat), 0, .02, 0, head);
+  const brim = put(M(new T.TorusGeometry(.3, .055, 10, 44), hat), 0, .1, 0, head); brim.rotation.x = Math.PI / 2;
+  put(Sph(.075, hat, 16), 0, .35, 0, head);
+  R.root = root; R.body = body; R.head = head; R.arms = arms; R.legs = legs; R.face = face; R.tall = tall;
+  R.pose = { headX: 0, headY: 0, headZ: 0 };
+  R.sit = () => { legs.R.rotation.x = legs.L.rotation.x = -1.5; body.position.y = -(hipY - .32); R.sitY = body.position.y; };
+  R.idle = (t, dt) => {
+    const a = reduceMotion ? 0 : 1;
+    head.rotation.set(R.pose.headX + Math.sin(t * 1.2) * .03 * a, R.pose.headY + Math.sin(t * .7) * .08 * a, R.pose.headZ);
+    face.blink(dt);
+  };
+  return R;
+}
+
+/* ================================================================
+   Decor
+   ================================================================ */
+function makeCookie(r) {
+  r = r || .1; const g = G();
+  put(Cyl(r, r * .97, r * .36, MAT.cookie, 22), 0, 0, 0, g);
+  [[.03, .04], [-.04, .02], [.01, -.045], [-.035, -.04], [.05, -.012]].forEach(([x, z]) => put(Sph(r * .17, MAT.choc, 8), x * r / .1, r * .17, z * r / .1, g));
+  return g;
+}
+function makeTree(s, o) {
+  s = s || 1; o = o || {}; const g = G();
+  const th = o.trunk || 1.5;
+  put(Cyl(.12 * s, .19 * s, th * s, MAT.trunk, 18), 0, th / 2 * s, 0, g);
+  const blobs = o.blobs || [[0, 1.85, 0, .78], [.48, 1.58, .12, .52], [-.46, 1.62, -.04, .56], [.06, 2.28, -.06, .56], [.12, 1.66, .42, .46], [-.2, 1.9, .3, .42]];
+  blobs.forEach(([x, y, z, r], i) => put(Sph(r * s, i % 2 ? MAT.leaf2 : MAT.leaf, 30), x * s, y * s, z * s, g));
+  return g;
+}
+function makeBush(s, mat) {
+  s = s || 1; const g = G();
+  [[0, .38, 0, .48], [.48, .3, .05, .38], [-.46, .3, .02, .4], [.2, .58, -.08, .36], [-.22, .55, .05, .34]].forEach(([x, y, z, r], i) => put(Sph(r * s, mat || (i % 2 ? MAT.leaf2 : MAT.leaf), 28), x * s, y * s, z * s, g));
+  return g;
+}
+function makeFlower(color) {
+  const g = G();
+  put(Cyl(.014, .014, .26, MAT.leaf2, 6), 0, .13, 0, g);
+  const m = P(color, { roughness: .6, sheen: .6, sheenColor: C(0xffffff) }); own.push(m);
+  for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; put(Sph(.045, m, 10), Math.cos(a) * .05, .28, Math.sin(a) * .05, g); }
+  put(Sph(.035, MAT.head, 10), 0, .29, 0, g);
+  return g;
+}
+function makeCloud() {
+  const g = G();
+  [[0, 0, 0, .5], [.5, -.08, 0, .38], [-.5, -.1, 0, .36], [.18, .22, -.05, .38]].forEach(([x, y, z, r]) => {
+    const m = Sph(r, MAT.cloud, 24); m.castShadow = false; put(m, x, y, z, g);
+  });
+  return g;
+}
+function makeHouse(color, roofColor) {
+  const g = G();
+  const wm = P(color, { roughness: .85 }), rm = P(roofColor, { roughness: .7 }); own.push(wm, rm);
+  put(Box(.9, .75, .8, wm, .05), 0, .375, 0, g);
+  const sh = new T.Shape(); sh.moveTo(-.55, 0); sh.lineTo(.55, 0); sh.lineTo(0, .48); sh.closePath();
+  const roof = M(new T.ExtrudeGeometry(sh, { depth: .9, bevelEnabled: false }), rm); roof.position.set(0, .74, -.45); g.add(roof);
+  put(Box(.22, .38, .04, MAT.woodDark, .03), .18, .2, .41, g);
+  put(Box(.24, .22, .04, MAT.daySky, .03), -.2, .45, .41, g);
+  return g;
+}
+function makeSack(open) {
+  const g = G();
+  const s = put(Sph(.36, MAT.burlap, 36), 0, .36, 0, g); s.scale.set(1, 1.08, .92);
+  put(Cyl(.16, .24, .14, MAT.burlap, 24), 0, .76, 0, g);
+  if (open) { [[0, .86, 0], [.08, .84, .07], [-.08, .85, -.05]].forEach(([x, y, z], i) => { const c = put(makeCookie(.085), x, y, z, g); c.rotation.set(.5 * (i - 1), i, .4 * (1 - i)); }); }
+  else { const t = put(M(new T.TorusGeometry(.13, .025, 8, 24), MAT.red), 0, .76, 0, g); t.rotation.x = Math.PI / 2; }
+  return g;
+}
+function makeTable(full) {
+  const g = G();
+  put(Box(1.7, .1, .75, MAT.wood, .035), 0, .98, 0, g);
+  [[-.75, -.3], [.75, -.3], [-.75, .3], [.75, .3]].forEach(([x, z]) => put(Cyl(.04, .04, .93, MAT.woodDark, 10), x, .47, z, g));
+  const plate = put(Cyl(.34, .27, .045, MAT.white, 40), 0, 1.055, .02, g);
+  const cookies = G(g);
+  if (full) {
+    [[0, 0], [.17, .06], [-.16, .08], [.06, -.15], [-.1, -.12], [.14, -.1], [0, .15]].forEach(([x, z], i) => {
+      const c = put(makeCookie(.1), x, 1.1, z + .02, cookies); c.rotation.set((i % 3 - 1) * .08, i, (i % 2 - .5) * .1);
+    });
+    [[.02, .05], [-.06, -.04], [.08, -.05]].forEach(([x, z], i) => { const c = put(makeCookie(.1), x, 1.15, z, cookies); c.rotation.set(.12, i * 2, -.1); });
+  }
+  return { g, plate, cookies };
+}
+function makeBakery() {
+  const g = G();
+  put(Box(3.3, 2.25, 1.4, MAT.wall, .06), 0, 1.125, 0, g);
+  const sh = new T.Shape(); sh.moveTo(-1.9, 0); sh.lineTo(1.9, 0); sh.lineTo(0, 1.05); sh.closePath();
+  const roof = M(new T.ExtrudeGeometry(sh, { depth: 1.6, bevelEnabled: true, bevelThickness: .05, bevelSize: .05, bevelSegments: 2 }), MAT.roof);
+  roof.position.set(0, 2.22, -.8); g.add(roof);
+  put(Box(.72, 1.28, .08, MAT.woodDark, .05), 1.0, .66, .71, g);
+  put(Sph(.04, MAT.gold, 12), .78, .66, .77, g);
+  put(Box(1.5, 1.0, .06, MAT.white, .05), -.55, 1.15, .7, g);
+  put(Box(1.36, .86, .06, MAT.daySky, .04), -.55, 1.15, .72, g);
+  const aw = canvasTex(64, 8, (x, w, h) => { for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? '#ffffff' : '#e5463c'; x.fillRect(i * 8, 0, 8, h); } }, [2, 1]);
+  const awm = P(0xffffff, { map: aw, roughness: .7, sheen: .6, sheenColor: C(0xffffff) }); own.push(awm, aw);
+  const awning = put(Box(3.5, .07, .95, awm), 0, 1.98, .98, g); awning.rotation.x = .38;
+  for (let i = 0; i < 14; i++) { const m = Sph(.125, i % 2 ? MAT.white : MAT.red, 16); m.scale.set(1, .8, .5); put(m, -1.625 + i * .25, 1.78, 1.42, g); }
+  const sign = put(Cyl(.36, .36, .07, MAT.cream, 40), 0, 2.68, .78, g); sign.rotation.x = Math.PI / 2 - .22;
+  const sc = put(makeCookie(.24), 0, 2.69, .84, g); sc.rotation.x = Math.PI / 2 - .22;
+  return g;
+}
+function makeCar() {
+  const g = G();
+  put(Box(2.3, .3, 1.25, MAT.carBlue, .13), 0, .42, 0, g);
+  put(Box(2.3, .3, 1.25, MAT.carWhite, .13), 0, .66, 0, g);
+  put(Box(.72, .17, 1.15, MAT.carWhite, .08), .78, .83, 0, g);
+  put(Box(1.3, .04, 1.07, MAT.navyDark, .02), -.28, .815, 0, g);
+  [-.3, .3].forEach(z => put(Box(.18, .42, .44, MAT.navyDark, .07), -.78, 1.0, z, g));
+  const wheels = [];
+  [[.78, .6], [.78, -.6], [-.78, .6], [-.78, -.6]].forEach(([x, z]) => {
+    const w = put(G(), x, .27, z, g);
+    const tire = put(Cyl(.27, .27, .2, MAT.rubber, 30), 0, 0, 0, w); tire.rotation.x = Math.PI / 2;
+    const hub = put(Cyl(.13, .13, .21, MAT.chrome, 20), 0, 0, 0, w); hub.rotation.x = Math.PI / 2;
+    const dot = put(Box(.05, .05, .215, MAT.carBlue), .07, 0, 0, w);
+    wheels.push(w);
+  });
+  const hl = new T.MeshStandardMaterial({ color: 0xfff6d8, emissive: C(0xfff0b8), emissiveIntensity: 1 }); own.push(hl);
+  [-.38, .38].forEach(z => { const h = put(Sph(.085, hl, 16), 1.13, .64, z, g); h.scale.x = .5; });
+  const bar = put(M(new T.TorusGeometry(.6, .045, 10, 32, Math.PI), MAT.chrome), -.96, .8, 0, g); bar.rotation.y = Math.PI / 2;
+  put(Box(.24, .1, .64, MAT.carWhite, .04), -.96, 1.44, 0, g);
+  const sA = new T.MeshStandardMaterial({ color: 0x3f86ff, emissive: C(0x2f7bff), emissiveIntensity: .2, transparent: true, opacity: .92, roughness: .2 });
+  const sB = sA.clone(); own.push(sA, sB);
+  const l1 = put(Sph(.1, sA, 20), -.96, 1.52, -.17, g); l1.scale.y = .8;
+  const l2 = put(Sph(.1, sB, 20), -.96, 1.52, .17, g); l2.scale.y = .8;
+  const steer = put(M(new T.TorusGeometry(.13, .022, 8, 24), MAT.black), .14, 1.05, -.3, g); steer.rotation.set(0, Math.PI / 2, 0); steer.rotation.z = .5;
+  const col = put(Cyl(.02, .02, .3, MAT.black, 8), .26, .95, -.3, g); col.rotation.z = .9;
+  put(Box(.12, .14, 1.05, MAT.navyDark, .04), .38, .88, 0, g);
+  let fast = 0;
+  return {
+    g, wheels,
+    flash() { fast = 2.5; },
+    update(t, dt) {
+      fast = Math.max(0, fast - dt);
+      const sp = fast > 0 ? 9 : 3.2, on = Math.sin(t * sp * Math.PI) > 0;
+      sA.emissiveIntensity = on ? 3.2 : .15; sB.emissiveIntensity = on ? .15 : 3.2;
+    },
+  };
+}
+function makeMedal() {
+  const g = G();
+  const rib = P(0xe0483e, { roughness: .7, sheen: .6, sheenColor: C(0xffffff) }); own.push(rib);
+  [-1, 1].forEach(s => { const r = put(Box(.06, .2, .015, rib), .04 * s, .1, 0, g); r.rotation.z = .35 * s; });
+  const d = put(Cyl(.085, .085, .025, MAT.gold, 28), 0, -.02, 0, g); d.rotation.x = Math.PI / 2;
+  put(M(starGeo(.055, .015), P(0xfff2b0, { metalness: .6, roughness: .3 })), 0, -.02, .02, g);
+  return g;
+}
+
+/* ---------- licht, stip en lucht ---------- */
+function lights(scene, o) {
+  o = o || {};
+  scene.add(new T.HemisphereLight(o.sky || 0xd8ebff, o.ground || 0x9cc47a, o.hemi === undefined ? .5 : o.hemi));
+  const k = new T.DirectionalLight(o.key || 0xffefd6, o.keyI === undefined ? 1.7 : o.keyI);
+  const d = o.dir || [4.5, 8.5, 6];
+  k.position.set(d[0], d[1], d[2]);
+  k.castShadow = true;
+  k.shadow.mapSize.set(2048, 2048);
+  const sc = k.shadow.camera; sc.left = -7; sc.right = 7; sc.top = 7; sc.bottom = -7; sc.near = .5; sc.far = 32;
+  k.shadow.bias = -.0004; k.shadow.normalBias = .025;
+  scene.add(k);
+  const rim = new T.DirectionalLight(o.rim || 0xd2e6ff, o.rimI === undefined ? .7 : o.rimI);
+  rim.position.set(-5, 4, -6); scene.add(rim);
+  scene.environment = ENV;
+}
+function stip(scene, o) {
+  o = o || {};
+  const r = o.r || 5;
+  const top = o.top || MAT.grass, side = o.side || MAT.soil;
+  const d = new T.Mesh(new T.CylinderGeometry(r, r * .95, .5, 120), [side, top, side]);
+  d.receiveShadow = true; d.position.y = -.25; scene.add(d);
+  const st = canvasTex(128, 128, (x, w, h) => {
+    const gr = x.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    gr.addColorStop(0, 'rgba(20,30,60,.35)'); gr.addColorStop(1, 'rgba(20,30,60,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, w, h);
+  });
+  const sm = new T.MeshBasicMaterial({ map: st, transparent: true, depthWrite: false }); own.push(st, sm);
+  const sh = new T.Mesh(new T.PlaneGeometry(r * 2.6, r * 2.6), sm); sh.rotation.x = -Math.PI / 2; sh.position.y = -.75; scene.add(sh);
+  return d;
+}
+function dayWorld(ctx, o) {
+  o = o || {};
+  lights(ctx.scene, o.light);
+  stip(ctx.scene, o.stip);
+  if (o.clouds !== false) {
+    [[-3.6, 4.2, -5.5, 1], [3.8, 4.8, -6, .8], [.6, 5.6, -7, .7]].forEach(([x, y, z, s], i) => {
+      const c = put(makeCloud(), x, y, z, ctx.scene); c.scale.setScalar(s);
+      ctx.every(t => { if (!reduceMotion) c.position.x = x + Math.sin(t * .15 + i * 2) * .5; });
+    });
+  }
+  (o.flowers || []).forEach(([x, z, c]) => put(makeFlower(c), x, 0, z, ctx.scene));
+}
+
+/* ================================================================
+   Animatie-hulpjes
+   ================================================================ */
+let tweens = [];
+function tween(dur, fn, done) { tweens.push({ t: 0, dur, fn, done }); }
+const ease = { out: k => 1 - Math.pow(1 - k, 3), inOut: k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2, back: k => 1 + 2.7 * Math.pow(k - 1, 3) + 1.7 * Math.pow(k - 1, 2) };
+function hop(obj, h, dur, spin) {
+  if (obj.userData.hopping) return; obj.userData.hopping = true;
+  const y0 = obj.position.y, r0 = obj.rotation.y;
+  tween(dur || .7, k => { obj.position.y = y0 + Math.sin(k * Math.PI) * (h || .5); if (spin) obj.rotation.y = r0 + ease.inOut(k) * Math.PI * 2; },
+    () => { obj.position.y = y0; obj.rotation.y = r0; obj.userData.hopping = false; });
+}
+function wiggle(obj, amt, dur) {
+  if (obj.userData.wig) return; obj.userData.wig = true;
+  const z0 = obj.rotation.z;
+  tween(dur || .8, k => { obj.rotation.z = z0 + Math.sin(k * Math.PI * 6) * (amt || .2) * (1 - k); }, () => { obj.rotation.z = z0; obj.userData.wig = false; });
+}
+
+/* ================================================================
+   Pagina's (scènes)
+   ================================================================ */
+function pCover(ctx) {
+  dayWorld(ctx, { flowers: [[-2.6, 1.8, 0xff8fb1], [2.9, 1.4, 0xffd24a], [-3.2, .2, 0xffffff], [3.3, -.6, 0xff8fb1], [-1.9, 2.8, 0xffd24a]] });
+  put(makeTree(1.05), -3.1, 0, -2.4, ctx.scene); put(makeTree(.85), 3.3, 0, -2.2, ctx.scene);
+  put(makeBush(.8), 2.2, 0, -3, ctx.scene);
+  const car = makeCar(); put(car.g, -1.05, 0, -.35, ctx.scene); car.g.rotation.y = -.45;
+  ctx.every((t, dt) => car.update(t, dt));
+  ctx.tap(car.g, () => { car.flash(); SFX.siren(); });
+
+  const joep = makeJoep({ cap: true }); joep.sit();
+  car.g.updateMatrixWorld(true);
+  const hood = car.g.localToWorld(v3(.8, .92, 0));
+  put(joep.root, hood.x, hood.y - .19, hood.z, ctx.scene); joep.root.scale.setScalar(1.3); joep.root.rotation.y = .15;
+  aim(joep.arms.R, .25, .9, .45); joep.arms.L.rotation.z = .9;
+  ctx.char(joep); ctx.tap(joep.root, () => { hop(joep.root, .55, .75, true); SFX.boing(); });
+
+  const daan = makeDaan({ cap: true, expr: 'grin' }); put(daan.root, 1.2, 0, .55, ctx.scene); daan.root.rotation.y = -.25;
+  daan.arms.R.sh.rotation.set(0, 0, -2.3); daan.arms.L.sh.rotation.z = .18;
+  ctx.every(t => { daan.arms.R.el.rotation.z = -.55 + (reduceMotion ? 0 : Math.sin(t * 7) * .35); });
+  ctx.char(daan); ctx.tap(daan.root, () => { hop(daan.root, .25, .45); SFX.pop(); });
+  return { target: [.05, 1.05, 0], dir: [0, .28, 1], w: 5.3, h: 3.1 };
+}
+
+function bedroom(ctx, night) {
+  lights(ctx.scene, night
+    ? { sky: 0x6a7fc4, ground: 0x2a2440, hemi: .55, key: 0xaec4ff, keyI: .9, dir: [-3, 7, 4], rim: 0x8aa0ff, rimI: .5 }
+    : { sky: 0xfff0dc, ground: 0xd9b48a, hemi: .5, key: 0xffeccf, keyI: 1.55 });
+  const planks = canvasTex(256, 256, (x, w, h) => {
+    x.fillStyle = '#c98f57'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? 'rgba(120,70,30,.10)' : 'rgba(255,240,210,.12)'; x.fillRect(0, i * 32, w, 32); x.fillStyle = 'rgba(90,50,20,.35)'; x.fillRect(0, i * 32, w, 2); }
+  }, [3, 3]);
+  const fm = P(0xffffff, { map: planks, roughness: .7 }); own.push(planks, fm);
+  stip(ctx.scene, { r: 4.6, top: fm, side: MAT.woodDark });
+  const wm = P(night ? 0x3d4a86 : 0x8fc0e8, { roughness: .95, side: T.DoubleSide }); own.push(wm);
+  const wall = M(new T.CylinderGeometry(4.55, 4.55, 3.6, 72, 1, true, Math.PI - 1.25, 2.5), wm);
+  wall.position.y = 1.8; wall.castShadow = false; ctx.scene.add(wall);
+  const win = put(G(), 1.25, night ? 1.2 : 1.55, -4.2, ctx.scene); win.rotation.y = -.28;
+  put(Box(1.5, 1.2, .12, MAT.white, .05), 0, 0, 0, win);
+  const pane = put(Box(1.3, 1.0, .05, night ? MAT.nightSky : MAT.daySky, .03), 0, 0, .05, win);
+  put(Box(.05, 1.0, .07, MAT.white), 0, 0, .07, win); put(Box(1.3, .05, .07, MAT.white), 0, 0, .07, win);
+  const rug = put(Cyl(1.35, 1.35, .025, P(0xffcf4a, { roughness: .95, sheen: 1, sheenColor: C(0xfff4c4) }), 64), .3, .012, .55, ctx.scene); own.push(rug.material);
+  put(Cyl(1.0, 1.0, .03, P(0xfff0b8, { roughness: .95 }), 64), .3, .015, .55, ctx.scene);
+  // poster met ster
+  const poster = put(G(), -1.45, 2.05, -4.22, ctx.scene); poster.rotation.y = .32;
+  put(Box(.8, 1.0, .05, MAT.white, .03), 0, 0, 0, poster);
+  put(Box(.68, .88, .05, P(0x2b67dc, { roughness: .7 }), .02), 0, 0, .02, poster);
+  put(M(starGeo(.24, .04), MAT.gold), 0, 0, .07, poster);
+  return { win, pane };
+}
+
+function pMeet(ctx) {
+  bedroom(ctx, false);
+  const box = put(Box(.9, .55, .6, MAT.toybox, .06), -1.75, .275, -.9, ctx.scene); box.rotation.y = .4;
+  put(makeCookie(.16), 1.7, .03, -.6, ctx.scene).rotation.z = .1;
+  const daan = makeDaan({ cap: false, expr: 'grin' }); put(daan.root, 0, 0, .25, ctx.scene);
+  daan.pose.headX = .06;
+  const joep = makeJoep(); put(joep.root, .02, .36, .5, ctx.scene); joep.root.scale.setScalar(1.12);
+  joep.arms.R.rotation.z = -1.25; joep.arms.L.rotation.z = 1.25;
+  joep.legs.R.rotation.set(-.25, 0, -.25); joep.legs.L.rotation.set(-.25, 0, .25);
+  aim(daan.arms.R.sh, .35, -.75, .9); daan.arms.R.el.rotation.x = -.9;
+  aim(daan.arms.L.sh, -.35, -.75, .9); daan.arms.L.el.rotation.x = -.9;
+  ctx.char(daan); ctx.char(joep);
+  ctx.every(t => { if (!reduceMotion) joep.root.position.y = .36 + Math.abs(Math.sin(t * 2.2)) * .02; });
+  ctx.tap(joep.root, () => { wiggle(joep.body, .35, .9); SFX.boing(); });
+  ctx.tap(daan.root, () => { hop(daan.root, .2, .4); SFX.pop(); });
+  return { target: [0, 1.05, .3], dir: [0, .16, 1], w: 2.9, h: 2.35 };
+}
+
+function pCaps(ctx) {
+  bedroom(ctx, false);
+  const box = put(Box(.75, .55, .6, MAT.toybox, .06), .95, .275, .35, ctx.scene); box.rotation.y = -.25;
+  const daan = makeDaan({ cap: true, expr: 'grin' }); put(daan.root, -.55, 0, .3, ctx.scene); daan.root.rotation.y = .3;
+  daan.arms.L.sh.rotation.set(0, 0, 2.2); daan.arms.L.el.rotation.z = .9;
+  const joep = makeJoep({ cap: true }); put(joep.root, .95, .55, .35, ctx.scene); joep.root.rotation.y = -.25;
+  ctx.char(daan); ctx.char(joep);
+  const dropCap = (cap, from, delay, done) => {
+    const y0 = cap.position.y; cap.position.y = y0 + from; cap.visible = true;
+    let t = -delay;
+    tween(1.1 + delay, k => { t = k * (1.1 + delay) - delay; const kk = Math.max(0, t / 1.1); cap.position.y = y0 + from * (1 - ease.back(Math.min(1, kk))); }, done);
+  };
+  if (!reduceMotion) {
+    dropCap(daan.cap, 1.4, 0, () => SFX.pop());
+    dropCap(joep.cap, 1.1, .5, () => { SFX.pop(); aim(joep.arms.R, .2, .9, .45); });
+  } else aim(joep.arms.R, .2, .9, .45);
+  ctx.tap(daan.root, () => { hop(daan.cap, .25, .5); SFX.pop(); });
+  ctx.tap(joep.root, () => { hop(joep.root, .4, .6, true); SFX.boing(); });
+  return { target: [.2, 1.1, .3], dir: [0, .16, 1], w: 3.3, h: 2.5 };
+}
+
+function pDrive(ctx) {
+  dayWorld(ctx, { stip: { r: 5.2 }, flowers: [[-4.4, .8, 0xff8fb1], [4.3, 1.5, 0xffd24a], [-.5, 4.5, 0xffffff], [1.6, 4.2, 0xff8fb1]] });
+  const road = M(new T.RingGeometry(2.65, 3.7, 120), MAT.road); road.rotation.x = -Math.PI / 2; road.position.y = .012; road.castShadow = false; ctx.scene.add(road);
+  for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; const d = put(Box(.3, .02, .07, MAT.white), Math.cos(a) * 3.175, .024, Math.sin(a) * 3.175, ctx.scene); d.rotation.y = -a + Math.PI / 2; d.castShadow = false; }
+  put(makeHouse(0xfbe3a8, 0x3c7fd8), -.7, 0, -.55, ctx.scene).rotation.y = .2;
+  put(makeHouse(0xffc9c2, 0xcc5a4b), .85, 0, .25, ctx.scene).rotation.y = -.4;
+  put(makeTree(.8), .5, 0, -1.3, ctx.scene); put(makeTree(.6), -1.3, 0, .9, ctx.scene);
+  [[-4.3, -2], [4.2, -2.3], [-3.2, -3.5], [3, -3.6], [-4.6, 1.9]].forEach(([x, z], i) => put(makeTree(.55 + (i % 2) * .2), x, 0, z, ctx.scene));
+  const car = makeCar(); ctx.scene.add(car.g); car.g.scale.setScalar(.95);
+  const daan = makeDaan({ cap: true, expr: 'grin' }); put(daan.root, -.3, .1, -.28, car.g); daan.root.rotation.y = Math.PI / 2;
+  aim(daan.arms.R.sh, .1, -.4, 1); aim(daan.arms.L.sh, -.1, -.4, 1);
+  daan.legs.R.rotation.x = daan.legs.L.rotation.x = -1.5;
+  const joep = makeJoep({ cap: true }); put(joep.root, -.3, .8, .3, car.g); joep.root.rotation.y = Math.PI / 2;
+  aim(joep.arms.L, .1, .9, .2); joep.arms.R.rotation.z = -1.0;
+  ctx.char(daan); ctx.char(joep);
+  let a = .9, speed = .42, boost = 0;
+  ctx.every((t, dt) => {
+    boost = Math.max(0, boost - dt);
+    a += dt * (reduceMotion ? .15 : (boost > 0 ? .9 : speed));
+    const r = 3.17;
+    car.g.position.set(Math.cos(a) * r, Math.abs(Math.sin(t * 9)) * .02, Math.sin(a) * r);
+    car.g.rotation.y = -(a + Math.PI / 2);
+    car.wheels.forEach(w => { w.rotation.z -= dt * (boost > 0 ? 9 : 4.5); });
+    car.update(t, dt);
+  });
+  ctx.tap(car.g, () => { car.flash(); boost = 2.2; SFX.siren(); });
+  return { target: [0, .2, .2], dir: [0, .78, 1], w: 9.4, h: 6.1 };
+}
+
+function bakeryScene(ctx, full) {
+  dayWorld(ctx, { light: { dir: [3.5, 8, 7] }, flowers: [[-3.6, 1.6, 0xff8fb1], [3.4, 1.9, 0xffd24a], [-2.6, 2.7, 0xffffff]] });
+  put(makeBakery(), 0, 0, -2.1, ctx.scene);
+  put(makeTree(.8), -3.3, 0, -2.3, ctx.scene); put(makeBush(.7), 3.3, 0, -1.7, ctx.scene);
+  const table = makeTable(full); put(table.g, -.35, 0, -.35, ctx.scene);
+  const baker = makeBaker(); put(baker.root, -.35, 0, -1.05, ctx.scene); baker.root.scale.setScalar(.92);
+  ctx.char(baker);
+  return { table, baker };
+}
+
+function pBakerySad(ctx) {
+  const { table, baker } = bakeryScene(ctx, false);
+  baker.face.set('sad');
+  aim(baker.arms.R, -.75, -.3, .6); aim(baker.arms.L, .75, -.3, .6);
+  ctx.every(t => { if (!reduceMotion) { const k = Math.sin(t * 2.2) * .12; aim(baker.arms.R, -.75, -.3 + k, .6); aim(baker.arms.L, .75, -.3 + k, .6); } });
+  [[.18, .04], [-.12, -.07], [.05, .13]].forEach(([x, z]) => put(Cyl(.022, .022, .012, MAT.cookie, 8), -.35 + x, 1.083, -.33 + z, ctx.scene));
+  const car = makeCar(); put(car.g, 3.0, 0, -.2, ctx.scene); car.g.rotation.y = 2.2; car.g.scale.setScalar(.8);
+  ctx.every((t, dt) => car.update(t, dt));
+  const daan = makeDaan({ cap: true, expr: 'oh' }); put(daan.root, 1.05, 0, .7, ctx.scene); daan.root.rotation.y = -.45;
+  aim(daan.arms.R.sh, -.6, -.5, .7); daan.arms.R.el.rotation.x = -1.6;
+  aim(daan.arms.L.sh, .6, -.5, .7); daan.arms.L.el.rotation.x = -1.6;
+  daan.pose.headX = -.05;
+  const joep = makeJoep({ cap: true }); put(joep.root, 1.85, 0, 1.0, ctx.scene); joep.root.rotation.y = -.5; joep.root.scale.setScalar(1.35);
+  aim(joep.arms.R, .3, .95, .1); aim(joep.arms.L, -.3, .95, .1);
+  ctx.char(daan); ctx.char(joep);
+  ctx.tap(baker.root, () => { wiggle(baker.head, .25, .9); SFX.sad(); });
+  ctx.tap(table.g, () => { hop(table.plate, .08, .3); SFX.tink(); });
+  ctx.tap(joep.root, () => { hop(joep.root, .45, .65); SFX.boing(); });
+  return { target: [.45, 1.25, -.3], dir: [0, .2, 1], w: 5.4, h: 3.3 };
+}
+
+function crumbPath(ctx, from, to, n, bend) {
+  const crumbs = [];
+  for (let i = 0; i < n; i++) {
+    const k = i / (n - 1);
+    const x = from[0] + (to[0] - from[0]) * k + Math.sin(k * Math.PI * 2) * bend;
+    const z = from[1] + (to[1] - from[1]) * k;
+    const c = put(Cyl(.055 + (i % 3) * .015, .06 + (i % 2) * .015, .035, MAT.cookie, 7), x + (i % 2 ? .08 : -.06), .018, z, ctx.scene);
+    c.rotation.y = i;
+    crumbs.push(c);
+  }
+  return crumbs;
+}
+
+function pCrumbs(ctx) {
+  dayWorld(ctx, { light: { dir: [5, 8, 5] }, flowers: [[-3.5, 1.2, 0xff8fb1], [3.6, .8, 0xffd24a], [-2.4, -2.6, 0xffffff], [2.2, 2.6, 0xff8fb1]] });
+  put(makeTree(1.1), -2.6, 0, -2.6, ctx.scene); put(makeTree(.9), 2.9, 0, -2.9, ctx.scene); put(makeTree(.7), .4, 0, -3.6, ctx.scene);
+  put(makeBush(.8), 3.5, 0, -1.1, ctx.scene); put(makeBush(.7), -3.7, 0, -.6, ctx.scene);
+  const crumbs = crumbPath(ctx, [-1.3, 2.3], [1.7, -2.8], 26, .55);
+  crumbs.forEach(c => ctx.tap(c, () => { hop(c, .3, .45); SFX.pop(); }));
+  const daan = makeDaan({ cap: true, expr: 'oh' }); put(daan.root, -.75, 0, .8, ctx.scene); daan.root.rotation.y = .5;
+  daan.pose.upperX = .16; daan.pose.headX = .12;
+  aim(daan.arms.R.sh, .1, -.35, 1); daan.arms.R.el.rotation.x = -.35;
+  const glass = G(daan.arms.R.hand);
+  const ring = put(M(new T.TorusGeometry(.15, .025, 12, 36), MAT.gold), 0, -.27, .0, glass); ring.rotation.x = Math.PI / 2;
+  const lens = put(M(new T.CircleGeometry(.15, 32), MAT.glass), 0, -.27, 0, glass); lens.rotation.x = -Math.PI / 2; lens.castShadow = false;
+  put(Cyl(.026, .03, .16, MAT.woodDark, 10), 0, -.06, 0, glass);
+  aim(daan.arms.L.sh, -.15, -.9, .3);
+  const joep = makeJoep({ cap: true }); put(joep.root, .55, 0, 1.25, ctx.scene); joep.root.rotation.y = -.3; joep.root.scale.setScalar(1.15);
+  aim(joep.arms.L, .9, .3, -.6); joep.arms.R.rotation.z = -.5;
+  ctx.char(daan); ctx.char(joep);
+  ctx.every(t => { if (!reduceMotion) glass.rotation.z = Math.sin(t * 1.6) * .15; });
+  ctx.tap(joep.root, () => { hop(joep.root, .4, .6); SFX.boing(); });
+  ctx.tap(daan.root, () => { wiggle(glass, .5, .8); SFX.pop(); });
+  return { target: [.1, .85, -.1], dir: [0, .34, 1], w: 5.4, h: 3.4 };
+}
+
+function pClimb(ctx) {
+  dayWorld(ctx, { light: { dir: [4, 8, 6] }, flowers: [[-2.6, 1.6, 0xff8fb1], [2.9, 1.9, 0xffd24a]] });
+  const tree = put(makeTree(1.45, { blobs: [[0, 2.2, 0, .85], [.55, 1.95, .1, .6], [-.55, 2.0, -.05, .62], [.05, 2.65, -.08, .6], [-.3, 2.3, .35, .45]] }), -.25, 0, -.6, ctx.scene);
+  put(makeBush(.8), 2.6, 0, -1.6, ctx.scene); put(makeTree(.7), -3.2, 0, -2.4, ctx.scene);
+  const joep = makeJoep({ cap: true }); ctx.scene.add(joep.root); joep.root.scale.setScalar(1.45);
+  aim(joep.arms.R, .55, 1, -.25); aim(joep.arms.L, -.55, 1, -.25);
+  joep.legs.R.rotation.set(-.5, 0, -.5); joep.legs.L.rotation.set(-.5, 0, .5);
+  const base = v3(-.25, .25, -.6 + .42);
+  let climb = 0, boost = 0;
+  ctx.every((t, dt) => {
+    boost = Math.max(0, boost - dt);
+    climb += dt * (reduceMotion ? 0 : (boost > 0 ? .5 : .16));
+    const c = climb % 1.35, k = Math.min(1, c);
+    const step = Math.floor(k * 6) + ease.out((k * 6) % 1);
+    joep.root.position.set(base.x, base.y + step / 6 * 1.45, base.z);
+    const sw = Math.sin(k * 6 * Math.PI * 2);
+    joep.arms.R.rotation.x = sw * .2; joep.arms.L.rotation.x = -sw * .2;
+    joep.legs.R.rotation.x = -.5 + sw * .25; joep.legs.L.rotation.x = -.5 - sw * .25;
+  });
+  const daan = makeDaan({ cap: true, expr: 'grin' }); put(daan.root, 1.15, 0, .85, ctx.scene); daan.root.rotation.y = -.55;
+  daan.pose.headX = -.35;
+  aim(daan.arms.R.sh, -.55, .8, .1); daan.arms.L.sh.rotation.z = .25;
+  ctx.char(daan); ctx.char(joep);
+  ctx.tap(joep.root, () => { boost = .8; SFX.hup(); });
+  ctx.tap(daan.root, () => { hop(daan.root, .2, .4); SFX.pop(); });
+  return { target: [.25, 1.55, 0], dir: [0, .12, 1], w: 4.4, h: 3.7 };
+}
+
+function peekers(ctx, x, z) {
+  const tall = makeBoef({ tall: true }), short = makeBoef({ tall: false, hat: MAT.red });
+  put(tall.root, x - .25, 0, z - .45, ctx.scene); put(short.root, x + .35, 0, z - .35, ctx.scene);
+  ctx.char(tall); ctx.char(short);
+  return { tall, short };
+}
+
+function pSpot(ctx) {
+  dayWorld(ctx, { light: { dir: [4, 8, 6] }, flowers: [[-3.2, 1.8, 0xff8fb1], [.6, 2.8, 0xffd24a]] });
+  const tree = put(makeTree(1.15, { trunk: 2.3, blobs: [[0, 2.75, 0, .78], [.5, 2.5, .1, .52], [-.5, 2.55, -.05, .56], [.05, 3.15, -.06, .56], [.1, 2.6, .42, .46]] }), -2.25, 0, -.9, ctx.scene);
+  const branch = put(Cyl(.06, .1, 1.35, MAT.trunk, 12), -1.6, 1.42, -.85, ctx.scene); branch.rotation.z = -1.35;
+  const bush = put(makeBush(1.25), 1.9, 0, -.55, ctx.scene);
+  const { tall, short } = peekers(ctx, 1.9, -.55);
+  tall.root.position.y = -.9; short.root.position.y = -.55;
+  const joep = makeJoep({ cap: true }); joep.sit(); put(joep.root, -1.2, 1.36, -.82, ctx.scene); joep.root.rotation.y = .35; joep.root.scale.setScalar(1.3);
+  aim(joep.arms.L, 1, .25, .1); aim(joep.arms.R, -.4, -.2, .7);
+  const daan = makeDaan({ cap: true, expr: 'oh' }); put(daan.root, -.15, 0, .95, ctx.scene); daan.root.rotation.y = .6;
+  aim(daan.arms.L.sh, .85, .35, .6);
+  ctx.char(joep); ctx.char(daan);
+  let peek = 0;
+  ctx.every((t, dt) => {
+    peek = Math.max(0, peek - dt);
+    const p = reduceMotion ? .5 : (Math.sin(t * 1.4) * .5 + .5);
+    tall.root.position.y = -1.15 + p * .4 + (peek > 0 ? .35 : 0);
+    short.root.position.y = -.85 + (1 - p) * .35 + (peek > 0 ? .35 : 0);
+  });
+  ctx.tap(bush, () => { peek = 1.4; wiggle(bush, .08, .7); SFX.pop(); });
+  ctx.tap(joep.root, () => { hop(joep.root, .25, .4); SFX.hup(); });
+  return { target: [-.1, 1.35, -.2], dir: [0, .18, 1], w: 5.8, h: 3.6 };
+}
+
+function pRobbers(ctx) {
+  dayWorld(ctx, { light: { dir: [4, 8, 6] }, flowers: [[-3, 1.8, 0xff8fb1], [3.1, 1.5, 0xffd24a]] });
+  put(makeBush(1.0), -2.8, 0, -1.4, ctx.scene); put(makeBush(1.1), 2.8, 0, -1.6, ctx.scene); put(makeTree(1), 0, 0, -3.2, ctx.scene);
+  const sack = put(makeSack(true), 0, 0, -.45, ctx.scene);
+  const tall = makeBoef({ tall: true }), short = makeBoef({ tall: false, hat: MAT.red });
+  put(tall.root, -.9, 0, -.15, ctx.scene); tall.root.rotation.y = .35;
+  put(short.root, .9, 0, .05, ctx.scene); short.root.rotation.y = -.35;
+  ctx.char(tall); ctx.char(short);
+  const ck1 = put(makeCookie(.11), 0, -.24, .02, tall.arms.R.hand); ck1.rotation.x = Math.PI / 2;
+  const ck2 = put(makeCookie(.11), 0, -.24, .02, short.arms.L.hand); ck2.rotation.x = Math.PI / 2;
+  aim(tall.arms.L.sh, .3, -.5, .6); tall.arms.L.el.rotation.x = -.6;
+  aim(short.arms.R.sh, -.4, -.6, .5); short.arms.R.el.rotation.x = -.8;
+  [[.4, .6], [-.5, .5], [.1, .9], [-.2, .3], [.7, .4]].forEach(([x, z], i) => { const c = put(makeCookie(.09), x, .02, z, ctx.scene); c.rotation.y = i; });
+  crumbPath(ctx, [-1.2, 1.6], [1.4, 1.2], 9, .2);
+  const eat = [{ b: tall, arm: tall.arms.R, s: 1 }, { b: short, arm: short.arms.L, s: -1 }];
+  const fast = [0, 0];
+  ctx.every((t, dt) => {
+    eat.forEach((e, i) => {
+      fast[i] = Math.max(0, fast[i] - dt);
+      const sp = fast[i] > 0 ? 3 : 1, ph = (t * sp + i * .9) % 2.2;
+      const up = ph < .6 ? ease.inOut(ph / .6) : ph < 1.4 ? 1 : 1 - ease.inOut(Math.min(1, (ph - 1.4) / .5));
+      aim(e.arm.sh, e.s * -.35, -.6 + up * .5, .55 + up * .1);
+      e.arm.el.rotation.x = -.4 - up * 1.55;
+      const chewing = ph > .55 && ph < 1.6;
+      e.b.face.set(chewing ? (Math.sin(t * 18) > 0 ? 'chew' : 'smile') : 'smile');
+      e.b.pose.headX = chewing ? Math.sin(t * 18) * .04 : 0;
+    });
+  });
+  ctx.tap(tall.root, () => { fast[0] = 2; SFX.crunch(); });
+  ctx.tap(short.root, () => { fast[1] = 2; SFX.crunch(); });
+  ctx.tap(sack, () => { wiggle(sack, .15, .6); SFX.crunch(); });
+  return { target: [0, 1.15, -.1], dir: [0, .18, 1], w: 4.6, h: 2.95 };
+}
+
+function pStop(ctx) {
+  dayWorld(ctx, { light: { dir: [4, 8, 6] }, flowers: [[-3.3, 1.9, 0xff8fb1], [3.4, 1.6, 0xffd24a]] });
+  put(makeBush(1.0), 3.0, 0, -1.6, ctx.scene); put(makeTree(1), -2.9, 0, -2.6, ctx.scene); put(makeTree(.8), 1.2, 0, -3.4, ctx.scene);
+  const sack = put(makeSack(true), 2.55, 0, -.25, ctx.scene); sack.scale.setScalar(.85);
+  const daan = makeDaan({ cap: true, expr: 'shout' }); put(daan.root, -1.45, 0, .55, ctx.scene); daan.root.rotation.y = .75;
+  aim(daan.arms.R.sh, .1, .55, 1); daan.arms.R.el.rotation.x = -.55;
+  daan.arms.L.sh.rotation.z = .35;
+  const joep = makeJoep({ cap: true }); put(joep.root, -.55, 0, 1.15, ctx.scene); joep.root.rotation.y = .5; joep.root.scale.setScalar(1.1);
+  ctx.char(daan); ctx.char(joep);
+  const tall = makeBoef({ tall: true }), short = makeBoef({ tall: false, hat: MAT.red });
+  put(tall.root, .95, 0, -.4, ctx.scene); tall.root.rotation.y = -.5;
+  put(short.root, 1.8, 0, .35, ctx.scene); short.root.rotation.y = -.7;
+  [tall, short].forEach(b => { b.face.set('oh'); aim(b.arms.R.sh, -.5, 1, .1); aim(b.arms.L.sh, .5, 1, .1); b.arms.R.el.rotation.z = -.3; b.arms.L.el.rotation.z = .3; });
+  ctx.char(tall); ctx.char(short);
+  const fly = put(makeCookie(.12), 1.3, 2.4, 0, ctx.scene);
+  let jumpT = 0;
+  ctx.every((t, dt) => {
+    const j = reduceMotion ? 0 : Math.abs(Math.sin(t * 4.2));
+    joep.root.position.y = j * .45;
+    aim(joep.arms.R, -.6, .9 * j - .1, .2); aim(joep.arms.L, .6, .9 * j - .1, .2);
+    const b = reduceMotion ? 0 : Math.abs(Math.sin(t * 3)) * .08;
+    tall.root.position.y = b; short.root.position.y = Math.abs(Math.sin(t * 3 + 1)) * .08 * (reduceMotion ? 0 : 1);
+    fly.position.set(1.3 + Math.sin(t * .9) * .2, 2.45 + Math.sin(t * 1.8) * .12, 0); fly.rotation.set(t * 1.5, t, .3);
+    jumpT = Math.max(0, jumpT - dt);
+  });
+  ctx.tap(joep.root, () => { SFX.monkey(); hop(joep.body, .35, .6, true); });
+  ctx.tap(tall.root, () => { hop(tall.body, .3, .45); SFX.pop(); });
+  ctx.tap(short.root, () => { hop(short.body, .3, .45); SFX.pop(); });
+  return { target: [.2, 1.2, 0], dir: [0, .2, 1], w: 5.7, h: 3.4 };
+}
+
+function pSorry(ctx) {
+  dayWorld(ctx, { light: { dir: [4, 7, 6], key: 0xffe7c8 }, flowers: [[-3.3, 1.8, 0xff8fb1], [3.4, 1.8, 0xffd24a]] });
+  put(makeTree(1.1), 3.0, 0, -2.6, ctx.scene); put(makeBush(.9), -3.2, 0, -1.8, ctx.scene);
+  const log = put(G(), .85, 0, -.55, ctx.scene);
+  const lc = put(Cyl(.3, .3, 2.3, MAT.trunk, 28), 0, .3, 0, log); lc.rotation.z = Math.PI / 2;
+  [-1, 1].forEach(s => { const e = put(Cyl(.27, .27, .02, MAT.trunkEnd, 28), 1.155 * s, .3, 0, log); e.rotation.z = Math.PI / 2; });
+  const tall = makeBoef({ tall: true }), short = makeBoef({ tall: false, hat: MAT.red });
+  tall.sit(); short.sit();
+  put(tall.root, .35, .3, -.55, ctx.scene); put(short.root, 1.4, .3, -.5, ctx.scene); short.root.rotation.y = -.15; tall.root.rotation.y = .1;
+  [tall, short].forEach(b => { b.face.set('sad'); b.pose.headX = .28; });
+  aim(tall.arms.R.sh, .2, -1, .5); aim(tall.arms.L.sh, -.2, -1, .5); tall.arms.R.el.rotation.x = tall.arms.L.el.rotation.x = -.9;
+  aim(short.arms.L.sh, -.4, -.5, .7); short.arms.L.el.rotation.x = -1.3; short.arms.R.sh.rotation.z = -.4;
+  ctx.char(tall); ctx.char(short);
+  const daan = makeDaan({ cap: true, expr: 'smile' }); put(daan.root, -1.35, 0, .65, ctx.scene); daan.root.rotation.y = .45;
+  daan.arms.R.sh.rotation.set(0, 0, -.75); daan.arms.R.el.rotation.set(-.6, 0, 1.7);
+  daan.arms.L.sh.rotation.set(0, 0, .75); daan.arms.L.el.rotation.set(-.6, 0, -1.7);
+  const joep = makeJoep({ cap: true }); joep.root.scale.setScalar(1.3);
+  put(joep.root, -.45, 0, 1.15, ctx.scene); joep.root.rotation.y = .35;
+  aim(joep.arms.R, -.9, -.55, .35); aim(joep.arms.L, .9, -.55, .35);
+  ctx.char(daan); ctx.char(joep);
+  ctx.every(t => { if (!reduceMotion) short.arms.L.sh.rotation.x += Math.sin(t * 5) * .004; });
+  [tall, short].forEach(b => ctx.tap(b.root, () => { const x0 = b.pose.headX; tween(.9, k => { b.pose.headX = x0 + Math.sin(k * Math.PI * 4) * .18 * (1 - k); }, () => { b.pose.headX = x0; }); SFX.sad(); }));
+  ctx.tap(joep.root, () => { wiggle(joep.body, .3, .7); SFX.boing(); });
+  return { target: [.1, 1.05, -.05], dir: [0, .2, 1], w: 5.3, h: 3.1 };
+}
+
+function pShare(ctx) {
+  const { table, baker } = bakeryScene(ctx, true);
+  baker.face.set('smile');
+  aim(baker.arms.R, .5, .5, .7); aim(baker.arms.L, -.5, .5, .7);
+  const tall = makeBoef({ tall: true }), short = makeBoef({ tall: false, hat: MAT.red });
+  put(tall.root, 1.75, 0, -.55, ctx.scene); tall.root.rotation.y = -.55;
+  put(short.root, 2.35, 0, .45, ctx.scene); short.root.rotation.y = -.75;
+  [tall, short].forEach(b => { aim(b.arms.R.sh, -.3, -.2, 1); b.arms.R.el.rotation.x = -1.1; const c = put(makeCookie(.11), 0, -.22, .04, b.arms.R.hand); c.rotation.x = Math.PI / 2; });
+  ctx.char(tall); ctx.char(short);
+  const daan = makeDaan({ cap: true, expr: 'grin' }); put(daan.root, -1.75, 0, .55, ctx.scene); daan.root.rotation.y = .5;
+  aim(daan.arms.L.sh, -.2, -.2, 1); daan.arms.L.el.rotation.x = -1.3;
+  const dc = put(makeCookie(.11), 0, -.22, .05, daan.arms.L.hand); dc.rotation.x = Math.PI / 2;
+  const joep = makeJoep({ cap: true }); put(joep.root, .3, 1.03, -.15, ctx.scene); joep.root.scale.setScalar(1.05); joep.root.rotation.y = -.15;
+  aim(joep.arms.R, -1, .35, .4); aim(joep.arms.L, 1, .35, .4);
+  [joep.arms.R, joep.arms.L].forEach(a => { const c = put(makeCookie(.085), 0, -.28, .02, a); c.rotation.x = Math.PI / 2; });
+  ctx.char(daan); ctx.char(joep);
+  ctx.every(t => { if (!reduceMotion) joep.root.position.y = 1.03 + Math.abs(Math.sin(t * 3)) * .08; });
+  ctx.tap(joep.root, () => { hop(joep.body, .4, .6, true); SFX.crunch(); });
+  ctx.tap(table.g, () => { const c = table.cookies.children[(Math.random() * table.cookies.children.length) | 0]; hop(c, .35, .5); SFX.pop(); });
+  ctx.tap(daan.root, () => { hop(daan.root, .2, .4); SFX.crunch(); });
+  return { target: [.25, 1.3, -.3], dir: [0, .2, 1], w: 5.9, h: 3.45 };
+}
+
+function confetti(ctx, n) {
+  const cols = [0xff5a5f, 0xffbd17, 0x2b67dc, 0x3ccf91, 0xff8fd1, 0xffffff];
+  const mats = cols.map(c => { const m = new T.MeshBasicMaterial({ color: c, side: T.DoubleSide }); own.push(m); return m; });
+  const geo = new T.PlaneGeometry(.07, .11);
+  const bits = [];
+  for (let i = 0; i < n; i++) {
+    const m = new T.Mesh(geo, mats[i % mats.length]);
+    m.position.set((Math.random() - .5) * 6, Math.random() * 4.5, (Math.random() - .5) * 3 + .5);
+    m.userData.v = .4 + Math.random() * .6; m.userData.s = v3(Math.random() * 4, Math.random() * 4, Math.random() * 4);
+    ctx.scene.add(m); bits.push(m);
+  }
+  let burst = 0;
+  ctx.every((t, dt) => {
+    burst = Math.max(0, burst - dt);
+    const sp = reduceMotion ? .2 : 1;
+    bits.forEach(b => {
+      b.position.y -= dt * b.userData.v * sp * (burst > 0 ? 2 : 1);
+      b.position.x += Math.sin(t * 2 + b.userData.v * 9) * dt * .2 * sp;
+      b.rotation.x += dt * b.userData.s.x * sp; b.rotation.y += dt * b.userData.s.y * sp;
+      if (b.position.y < 0) b.position.y = 4.5;
+    });
+  });
+  return { burst() { burst = 1.5; bits.forEach(b => { b.position.y = 1 + Math.random() * 3.5; }); } };
+}
+
+function pMedal(ctx) {
+  const { baker } = bakeryScene(ctx, true);
+  baker.face.set('smile');
+  const car = makeCar(); put(car.g, 3.1, 0, -.1, ctx.scene); car.g.rotation.y = 2.4; car.g.scale.setScalar(.8);
+  const tall = makeBoef({ tall: true }), short = makeBoef({ tall: false, hat: MAT.red });
+  put(tall.root, -2.2, 0, -1.05, ctx.scene); tall.root.rotation.y = .45; put(short.root, -2.35, 0, .05, ctx.scene); short.root.rotation.y = .6;
+  ctx.char(tall); ctx.char(short);
+  const daan = makeDaan({ cap: true, expr: 'grin' }); put(daan.root, -.6, 0, .8, ctx.scene); daan.root.rotation.y = .05;
+  daan.arms.R.sh.rotation.set(0, 0, -2.5); daan.arms.R.el.rotation.z = -.35;
+  daan.arms.L.sh.rotation.set(0, 0, 2.5); daan.arms.L.el.rotation.z = .35;
+  const md = put(makeMedal(), 0, 1.06 - .52, .29, daan.upper); md.scale.setScalar(1.25); md.rotation.x = -.15;
+  const joep = makeJoep({ cap: true }); put(joep.root, .65, 0, 1.05, ctx.scene); joep.root.scale.setScalar(1.15); joep.root.rotation.y = -.2;
+  const jm = put(makeMedal(), 0, .43, .11, joep.body); jm.scale.setScalar(.65);
+  ctx.char(daan); ctx.char(joep);
+  const conf = confetti(ctx, reduceMotion ? 40 : 90);
+  ctx.every((t, dt) => {
+    car.update(t, dt);
+    const c = reduceMotion ? 0 : Math.sin(t * 7);
+    [baker.arms.R, baker.arms.L].forEach((a, i) => aim(a, (i ? -1 : 1) * (.15 + .25 * (c * .5 + .5)), .4, 1));
+    [tall, short].forEach((b, i) => { aim(b.arms.R.sh, .05 + .25 * (c * .5 + .5), .2, 1); aim(b.arms.L.sh, -.05 - .25 * (c * .5 + .5), .2, 1); b.arms.R.el.rotation.x = b.arms.L.el.rotation.x = -.6; });
+    const j = reduceMotion ? 0 : Math.abs(Math.sin(t * 3.6));
+    joep.root.position.y = j * .3; aim(joep.arms.R, -.5, 1, .2); aim(joep.arms.L, .5, 1, .2);
+  });
+  const party = () => { conf.burst(); SFX.chime(); };
+  ctx.tap(joep.root, () => { party(); hop(joep.body, .3, .6, true); });
+  ctx.tap(daan.root, party); ctx.tap(baker.root, party);
+  ctx.background(party);
+  return { target: [-.1, 1.3, -.25], dir: [0, .2, 1], w: 6.6, h: 3.7 };
+}
+
+function pNight(ctx) {
+  const { win } = bedroom(ctx, true);
+  const moon = put(Sph(.27, MAT.moon, 32), .28, .14, .12, win); moon.castShadow = false;
+  const stars = [];
+  [[-.4, .25], [-.2, -.25], [.45, -.3], [-.5, -.1], [.1, .35]].forEach(([x, y]) => { const s = put(M(starGeo(.045, .01), MAT.moon), x, y, .1, win); s.castShadow = false; stars.push(s); });
+  const lampL = new T.PointLight(0xffc77a, 2.2, 7, 1.6); put(lampL, 1.55, 1.25, -.6, ctx.scene);
+  put(Box(.55, .6, .5, MAT.wood, .05), 1.6, .3, -.75, ctx.scene);
+  put(Cyl(.03, .05, .35, MAT.white, 12), 1.6, .78, -.75, ctx.scene);
+  put(M(new T.SphereGeometry(.2, 24, 16, 0, Math.PI * 2, 0, Math.PI * .55), MAT.lamp), 1.6, .95, -.75, ctx.scene);
+  // bed
+  const bed = put(G(), -.35, 0, -.75, ctx.scene); bed.rotation.y = -Math.PI / 2;
+  put(Box(2.5, .42, 1.45, MAT.wood, .08), 0, .25, 0, bed);
+  put(Box(.14, 1.05, 1.45, MAT.wood, .06), -1.22, .55, 0, bed);
+  put(Box(.12, .75, 1.45, MAT.wood, .05), 1.22, .4, 0, bed);
+  put(Box(2.3, .2, 1.3, MAT.white, .08), 0, .55, 0, bed);
+  put(Box(.6, .2, 1.0, MAT.pillow, .09), -.82, .72, 0, bed);
+  const bk = canvasTex(128, 128, (x, w, h) => {
+    x.fillStyle = '#7aa4ea'; x.fillRect(0, 0, w, h); x.fillStyle = '#ffd863';
+    for (let i = 0; i < 9; i++) { const cx = (i * 47) % w + 10, cy = (i * 71) % h + 10; x.beginPath(); for (let j = 0; j < 10; j++) { const a = j / 10 * Math.PI * 2 - Math.PI / 2, r = j % 2 ? 4 : 9; x.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } x.fill(); }
+  }, [2, 1]);
+  const bm = P(0xffffff, { map: bk, roughness: .9, sheen: 1, sheenColor: C(0xd2e2ff), sheenRoughness: .5 }); own.push(bk, bm);
+  const blanket = put(Box(1.55, .52, 1.4, bm, .16), .36, .93, 0, bed);
+  const daan = makeDaan({ cap: false, expr: 'sleep', outfit: 'pj' });
+  const lie = put(G(), 0, 0, 0, bed); lie.rotation.y = Math.PI / 2;
+  // in 'lie' wijst lokaal -z naar de x-as van het bed; Daan ligt op zijn rug met zijn hoofd op het kussen
+  put(daan.root, 0, .9, .71, lie); daan.root.rotation.set(-Math.PI / 2, 0, 0);
+  daan.pose.headX = .42;
+  const jl = put(G(), 0, 0, 0, bed); jl.rotation.y = Math.PI / 2;
+  const joep = makeJoep(); put(joep.root, -.36, 1.2, .25, jl); joep.root.rotation.set(-Math.PI / 2, -.25, 0); joep.root.scale.setScalar(.95); joep.pose.headX = .35;
+  joep.arms.R.rotation.z = -1.3; joep.arms.L.rotation.z = 1.0;
+  const cap = makeCap(); put(cap, 1.42, .6, -.5, ctx.scene); cap.rotation.set(.08, -.5, .05); cap.scale.setScalar(.5);
+  ctx.char(daan); ctx.char(joep);
+  // Zzz
+  const zt = canvasTex(64, 64, (x, w, h) => { x.fillStyle = '#ffffff'; x.font = 'bold 52px "Baloo 2", system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('z', w / 2, h / 2 + 4); });
+  const zs = [];
+  for (let i = 0; i < 3; i++) { const m = new T.SpriteMaterial({ map: zt, transparent: true, depthWrite: false }); own.push(m); const s = new T.Sprite(m); s.scale.setScalar(.25); ctx.scene.add(s); zs.push(s); }
+  own.push(zt);
+  const zOrigin = v3(-.2, 1.55, -1.55);
+  ctx.every(t => {
+    const breathe = reduceMotion ? 0 : Math.sin(t * 1.6) * .012;
+    blanket.scale.y = 1 + breathe * 1.5; joep.root.position.y = 1.22 + breathe;
+    zs.forEach((s, i) => {
+      const k = ((t * .28) + i / 3) % 1;
+      s.position.set(zOrigin.x + k * .5 + Math.sin(k * 6) * .08, zOrigin.y + k * 1.1, zOrigin.z);
+      s.material.opacity = Math.sin(k * Math.PI) * .9; s.scale.setScalar(.16 + k * .22);
+    });
+    stars.forEach((s, i) => { s.scale.setScalar(.8 + Math.sin(t * 2 + i) * .25); });
+  });
+  ctx.tap(win, () => { SFX.lullaby(); hop(moon, .12, .8); });
+  ctx.tap(joep.root, () => { wiggle(joep.body, .2, .7); SFX.boing(); });
+  ctx.tap(daan.root, () => { SFX.lullaby(); });
+  return { target: [-.1, 1.0, -.7], dir: [0, .72, 1], w: 4.4, h: 3.2 };
+}
+
+/* ================================================================
+   Paginabeheer, camera, interactie
+   ================================================================ */
+let idx = 0, current = null, view = null, clockT = 0;
+const camBase = v3(0, 0, 0), camTarget = v3(0, 0, 0);
+
+function disposeScene(sc) {
+  if (!sc) return;
+  sc.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+  own.splice(0).forEach(x => { if (x && x.dispose) x.dispose(); });
+}
+
+function build(i) {
+  if (!renderer) return;
+  tweens = [];
+  if (current) disposeScene(current.scene);
+  const scene = new T.Scene();
+  const ctx = {
+    scene, updates: [], taps: [], chars: [], bg: null,
+    every(fn) { this.updates.push(fn); },
+    tap(obj, fn) { obj.userData.tap = fn; this.taps.push(obj); },
+    char(c) { this.chars.push(c); },
+    background(fn) { this.bg = fn; },
+  };
+  view = PAGES[i].build(ctx);
+  current = ctx;
+  frame();
+  const sky = PAGES[i].sky;
+  stage.style.background = 'linear-gradient(' + sky[0] + ',' + sky[1] + ')';
+}
+
+function frame() {
+  if (!view || !camera) return;
+  const fov = camera.fov * Math.PI / 180, t = Math.tan(fov / 2);
+  const dist = Math.max(view.h / 2 / t, view.w / 2 / (t * camera.aspect));
+  const d = v3(view.dir[0], view.dir[1], view.dir[2]).normalize().multiplyScalar(dist);
+  camTarget.set(view.target[0], view.target[1], view.target[2]);
+  camBase.copy(camTarget).add(d);
+  camera.position.copy(camBase); camera.lookAt(camTarget);
+}
+
+function fit() {
+  const bw = stageBox.clientWidth, bh = stageBox.clientHeight;
+  if (!bw || !bh) return;
+  const aspect = bw / bh < 1.02 ? 1 : 4 / 3;
+  const w = Math.floor(Math.min(bw, bh * aspect)), h = Math.floor(w / aspect);
+  stage.style.width = w + 'px'; stage.style.height = h + 'px';
+  if (!renderer) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = aspect; camera.updateProjectionMatrix();
+  frame();
+}
+
+function renderText(i) {
+  const p = PAGES[i];
+  let html = p.html;
+  if (p.end) html += '<br><button class="chip" type="button" id="again">Nog een keer lezen</button>';
+  textEl.innerHTML = html;
+  const again = $('again'); if (again) again.addEventListener('click', () => go(0));
+  canvas.setAttribute('aria-label', p.alt);
+  prevBtn.disabled = i === 0; nextBtn.disabled = i === PAGES.length - 1;
+  [...dotsEl.children].forEach((d, j) => d.setAttribute('aria-current', j === i ? 'true' : 'false'));
+  tapEl.hidden = !renderer || !p.tap; tapText.textContent = p.tap || '';
+}
+
+let switching = false;
+function go(i) {
+  if (i < 0 || i >= PAGES.length || i === idx || switching) return;
+  switching = true;
+  const swap = () => {
+    idx = i; build(i); renderText(i);
+    stage.classList.remove('fade'); textEl.classList.remove('out');
+    if (PAGES[i].enter) PAGES[i].enter();
+    switching = false;
+  };
+  if (reduceMotion) { swap(); return; }
+  stage.classList.add('fade'); textEl.classList.add('out');
+  setTimeout(swap, 200);
+}
+
+prevBtn.addEventListener('click', () => go(idx - 1));
+nextBtn.addEventListener('click', () => go(idx + 1));
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') go(idx + 1);
+  else if (e.key === 'ArrowLeft') go(idx - 1);
+});
+
+// tikken en vegen op de plaat
+const ray = new T.Raycaster(), ptr = new T.Vector2();
+let down = null;
+stage.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+stage.addEventListener('pointerup', e => {
+  if (!down) return;
+  const dx = e.clientX - down.x, dy = e.clientY - down.y; down = null;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.3) { go(idx + (dx < 0 ? 1 : -1)); return; }
+  if (Math.hypot(dx, dy) > 12 || !current || !renderer) return;
+  ac();
+  const r = canvas.getBoundingClientRect();
+  ptr.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  const hits = ray.intersectObjects(current.taps, true);
+  for (const h of hits) {
+    let o = h.object;
+    while (o && !o.userData.tap) o = o.parent;
+    if (o) { o.userData.tap(); tapEl.hidden = true; return; }
+  }
+  if (current.bg) current.bg();
+});
+
+/* ---------- lus ---------- */
+const clock = renderer ? new T.Clock() : null;
+function step(dt) {
+  clockT += dt;
+  for (let i = tweens.length - 1; i >= 0; i--) {
+    const tw = tweens[i]; tw.t += dt; const k = Math.min(1, tw.t / tw.dur); tw.fn(k);
+    if (k >= 1) { tweens.splice(i, 1); if (tw.done) tw.done(); }
+  }
+  current.updates.forEach(f => f(clockT, dt));
+  current.chars.forEach(c => c.idle(clockT, dt));
+  if (!reduceMotion) {
+    camera.position.set(camBase.x + Math.sin(clockT * .25) * .08, camBase.y + Math.sin(clockT * .33) * .04, camBase.z);
+    camera.lookAt(camTarget);
+  }
+}
+function loop() {
+  requestAnimationFrame(loop);
+  if (document.hidden || !current) return;
+  step(Math.min(.05, clock.getDelta()));
+  renderer.render(current.scene, camera);
+}
+
+/* ---------- start ---------- */
+if (window.ResizeObserver) new ResizeObserver(fit).observe(stageBox);
+window.addEventListener('resize', fit);
+fit();
+build(0); renderText(0);
+fit();
+if (renderer) {
+  current.updates.forEach(f => f(0, 0)); current.chars.forEach(c => c.idle(0, 0));
+  renderer.render(current.scene, camera);
+  loop();
+}
+window.__book = { go: i => { switching = false; idx = -1; go(i); }, pages: PAGES.length, ff: sec => { for (let k = 0; k < sec * 30; k++) step(1 / 30); } };
+})();
+</script>
+
+</body>
+</html>

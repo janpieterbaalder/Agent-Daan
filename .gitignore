@@ -1,0 +1,9 @@
+# Nooit de echte foto's of werkbestanden in de repository
+foto*/
+*foto*
+*.blend
+*.blend1
+__pycache__/
+*.pyc
+prentenboek/renders/*.png
+work/
